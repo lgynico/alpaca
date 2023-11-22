@@ -8,8 +8,8 @@ import (
 
 func TestCheckRule(t *testing.T) {
 
-	config_dir = "."
-	go_out = "./data"
+	config_dir = "./example"
+	go_out = "./example"
 
 	mates, err := mate.Parse(config_dir)
 	if err != nil {

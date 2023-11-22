@@ -2,6 +2,7 @@ package rule
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/lgynico/alpaca/mate"
 )
@@ -14,6 +15,7 @@ var Parser = &parser{
 		regexp.MustCompile(`^(range)\s*([\(\[])\s*(\d+)\s*,\s*(\d+)\s*([\)\]])$`),
 		regexp.MustCompile(`^(length)\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]$`),
 		regexp.MustCompile(`^(decimal)\s*:\s*(\d+)$`),
+		regexp.MustCompile(`(enum):(\S+(?:,\S+)*)$`),
 	},
 }
 
@@ -39,12 +41,20 @@ func (p *parser) parseRule(value string) mate.Rule {
 			continue
 		}
 
-		ss := pattern.FindAllStringSubmatch(value, -1)[0]
+		var (
+			ss     = pattern.FindAllStringSubmatch(value, -1)[0]
+			key    = ss[1]
+			params = ss[2:]
+		)
+
+		if key == "enum" {
+			params = strings.Split(ss[2], ",")
+		}
 
 		return mate.Rule{
 			Origin: value,
-			Key:    ss[1],
-			Params: ss[2:],
+			Key:    key,
+			Params: params,
 		}
 	}
 
