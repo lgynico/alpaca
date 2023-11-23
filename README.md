@@ -33,3 +33,23 @@ alpaca -dir=/path/to/excels -json_out=/path/to/gen/json -go_out=/path/to/gen/go
 - require 必填
 - range[min,max] 对数值类型有效，限定数值的范围，区间可开可闭，如 range(1,10] range[1,10)
 - length[min,max] 对 string 和集合类有效，限定长度
+
+## Todo List
+- 支持多配置数据来源
+  - Excel ✔️
+  - etc......
+- 支持多语言配置类生成
+  - Golang ✔️
+  - Java
+  - C/C++
+  - C#
+  - Js/Ts
+  - Python
+  - Rust
+  - etc......
+- 支持多格式导出
+  - json ✔️
+  - xml
+  - lua
+  - yaml
+  - etc......
