@@ -9,7 +9,7 @@ import (
 var TestSheet1 = &testSheet1Config{}
 
 type (
-	TestSheet1Row struct {
+	testSheet1Row struct {
 		I       int            `json:"i"` // 一个int类型值
 		I8      int8           `json:"i8"`
 		I32     int32          `json:"i32"`
@@ -29,7 +29,7 @@ type (
 	}
 
 	testSheet1Config struct {
-		rows map[int]*TestSheet1Row
+		rows map[int]*testSheet1Row
 	}
 )
 
@@ -39,12 +39,12 @@ func (c *testSheet1Config) Load(dir string) {
 		panic("load config error: " + err.Error())
 	}
 
-	rows := []*TestSheet1Row{}
+	rows := []*testSheet1Row{}
 	if err = json.Unmarshal(data, &rows); err != nil {
 		panic("parse config error: " + err.Error())
 	}
 
-	c.rows = map[int]*TestSheet1Row{}
+	c.rows = map[int]*testSheet1Row{}
 	for _, row := range rows {
 		c.rows[row.I] = row
 	}
@@ -55,13 +55,13 @@ func (c *testSheet1Config) Filename() string {
 	return "test_sheet1"
 }
 
-func (c *testSheet1Config) Get(key int) (*TestSheet1Row, bool) {
+func (c *testSheet1Config) Get(key int) (*testSheet1Row, bool) {
 	row, ok := c.rows[key]
 	return row, ok
 }
 
-func (c *testSheet1Config) List() []*TestSheet1Row {
-	list := []*TestSheet1Row{}
+func (c *testSheet1Config) List() []*testSheet1Row {
+	list := []*testSheet1Row{}
 	for _, row := range c.rows {
 		list = append(list, row)
 	}

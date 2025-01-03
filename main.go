@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/types"
 )
 
@@ -39,7 +39,7 @@ func main() {
 		panic(err)
 	}
 
-	mates, err := mate.Parse(config_dir)
+	mates, err := meta.Parse(config_dir)
 	if err != nil {
 		panic(err)
 	}

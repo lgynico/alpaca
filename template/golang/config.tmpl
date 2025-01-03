@@ -1,0 +1,54 @@
+package {{.Package}}
+
+import (
+	"os"
+	"encoding/json"
+	"path"
+)
+
+var {{.ExportName}} = &{{.ConfigName}}Config{}
+
+type (
+	{{.RowName}}Row struct {
+		{{range .RowFields}}{{.}} {{end}}
+	}
+
+	{{.ConfigName}}Config struct {
+		rows map[{{.KeyType}}]*{{.RowName}}Row
+	}
+)
+
+func (c *{{.ConfigName}}Config) Load(dir string) {
+	data, err := os.ReadFile(path.Join(dir, c.Filename() + ".json"))
+	if err != nil {
+		panic("load config error: " + err.Error())
+	}
+
+	rows := []*{{.RowName}}Row{}
+	if err = json.Unmarshal(data, &rows); err != nil {
+		panic("parse config error: " + err.Error())
+	}
+
+	c.rows = map[{{.KeyType}}]*{{.RowName}}Row{}
+	for _, row := range rows {
+		c.rows[row.{{.KeyFieldName}}] = row
+	}
+
+}
+
+func (c *{{.ConfigName}}Config) Filename() string {
+	return "{{.Filename}}"
+}
+
+func (c *{{.ConfigName}}Config) Get(key {{.KeyType}}) (*{{.RowName}}Row, bool) {
+	row, ok := c.rows[key]
+	return row, ok
+}
+
+func (c *{{.ConfigName}}Config) List() []*{{.RowName}}Row {
+	list := []*{{.RowName}}Row{}
+	for _, row := range c.rows {
+		list = append(list, row)
+	}
+	return list
+}

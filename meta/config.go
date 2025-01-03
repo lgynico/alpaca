@@ -1,4 +1,4 @@
-package mate
+package meta
 
 type Config struct {
 	Filename string   // 文件名

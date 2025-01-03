@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/types"
 )
 
@@ -13,7 +13,7 @@ func TestCheckRule(t *testing.T) {
 	config_dir = "./example"
 	go_out = "./example"
 
-	mates, err := mate.Parse(config_dir)
+	mates, err := meta.Parse(config_dir)
 	if err != nil {
 		panic(err)
 	}

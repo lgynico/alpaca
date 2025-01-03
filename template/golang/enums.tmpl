@@ -1,0 +1,9 @@
+package {{.Package}}
+
+{{range $_, $enum := .Enums}}
+const(
+    {{range $_, $e := $enum}}{{$e.Key}} = {{$e.Value}}
+    {{end}}
+)
+
+{{end}}

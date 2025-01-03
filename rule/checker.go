@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/lgynico/alpaca/consts"
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 )
 
 var Checker = &checker{
@@ -24,14 +24,14 @@ var Checker = &checker{
 }
 
 type (
-	checkFunc func(meta *mate.Config, field *mate.Field) error
+	checkFunc func(meta *meta.Config, field *meta.Field) error
 
 	checker struct {
 		ruleCheckers map[consts.RuleType]checkFunc
 	}
 )
 
-func (c *checker) Visit(configMeta *mate.Config) error {
+func (c *checker) Visit(configMeta *meta.Config) error {
 	for _, field := range configMeta.Fields {
 		checkFunc := c.getCheckFunc(consts.RuleType(field.RuleMeta.Key))
 		if err := checkFunc(configMeta, field); err != nil {
@@ -49,15 +49,15 @@ func (c *checker) getCheckFunc(ruleType consts.RuleType) checkFunc {
 	return errRuleCheck
 }
 
-func noRuleCheck(meta *mate.Config, field *mate.Field) error {
+func noRuleCheck(meta *meta.Config, field *meta.Field) error {
 	return nil
 }
 
-func errRuleCheck(meta *mate.Config, field *mate.Field) error {
+func errRuleCheck(meta *meta.Config, field *meta.Field) error {
 	return fmt.Errorf("unknown rule string: %s", field.RuleMeta.Origin)
 }
 
-func keyRuleCheck(meta *mate.Config, field *mate.Field) error {
+func keyRuleCheck(meta *meta.Config, field *meta.Field) error {
 	if meta.KeyField != nil {
 		return errors.New("duplicate key field")
 	}
@@ -66,7 +66,7 @@ func keyRuleCheck(meta *mate.Config, field *mate.Field) error {
 	return uniqueRuleCheck(meta, field)
 }
 
-func uniqueRuleCheck(meta *mate.Config, field *mate.Field) error {
+func uniqueRuleCheck(meta *meta.Config, field *meta.Field) error {
 	set := map[string]bool{}
 	for _, value := range field.RawValues {
 		if _, ok := set[value]; ok {
@@ -78,7 +78,7 @@ func uniqueRuleCheck(meta *mate.Config, field *mate.Field) error {
 	return nil
 }
 
-func requireRuleCheck(meta *mate.Config, field *mate.Field) error {
+func requireRuleCheck(meta *meta.Config, field *meta.Field) error {
 	for _, value := range field.RawValues {
 		if len(strings.TrimSpace(value)) == 0 {
 			return fmt.Errorf("empty value on require field: %s", field.Name)
@@ -87,7 +87,7 @@ func requireRuleCheck(meta *mate.Config, field *mate.Field) error {
 	return nil
 }
 
-func rangeRuleCheck(meta *mate.Config, field *mate.Field) error {
+func rangeRuleCheck(meta *meta.Config, field *meta.Field) error {
 	for _, value := range field.RawValues {
 		switch field.Type {
 		case consts.Int, consts.Int8, consts.Int32, consts.Int64:
@@ -128,7 +128,7 @@ func rangeRuleCheck(meta *mate.Config, field *mate.Field) error {
 	return nil
 }
 
-func lengthRuleCheck(meta *mate.Config, field *mate.Field) error {
+func lengthRuleCheck(meta *meta.Config, field *meta.Field) error {
 	if field.Type != consts.String {
 		return fmt.Errorf("range rule only supports for string types, not for %s type", field.Type)
 	}
@@ -152,12 +152,12 @@ func lengthRuleCheck(meta *mate.Config, field *mate.Field) error {
 	return nil
 }
 
-func decimalRuleCheck(meta *mate.Config, field *mate.Field) error {
+func decimalRuleCheck(meta *meta.Config, field *meta.Field) error {
 	// TODO: trim decimal
 	return nil
 }
 
-func enumRuleCheck(meta *mate.Config, field *mate.Field) error {
+func enumRuleCheck(meta *meta.Config, field *meta.Field) error {
 outer:
 	for _, rawValue := range field.RawValues {
 		for _, param := range field.RuleMeta.Params {

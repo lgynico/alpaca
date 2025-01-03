@@ -1,5 +1,5 @@
 package writer
 
-import "github.com/lgynico/alpaca/mate"
+import "github.com/lgynico/alpaca/meta"
 
-type WriteFunc func(filepath string, configMate *mate.Config) error
+type WriteFunc func(filepath string, configMate *meta.Config) error

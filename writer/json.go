@@ -7,16 +7,16 @@ import (
 	"reflect"
 
 	"github.com/lgynico/alpaca/consts"
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 )
 
-func WriteJSON(filepath string, configMeta *mate.Config) error {
+func WriteJSON(filepath string, configMeta *meta.Config) error {
 	jsonStr := toJSON(configMeta)
 	jsonFilepath := path.Join(filepath, configMeta.Filename+".json")
 	return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
 }
 
-func toJSON(configMeta *mate.Config) string {
+func toJSON(configMeta *meta.Config) string {
 	jsonArr := make([]string, len(configMeta.Fields[0].Values))
 
 	for i, field := range configMeta.Fields {

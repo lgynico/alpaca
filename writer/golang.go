@@ -6,52 +6,89 @@ import (
 	"path"
 	"strings"
 
+	"github.com/lgynico/alpaca/types"
+
+	gotemplate "text/template"
+
 	"github.com/lgynico/alpaca/consts"
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/template"
 )
 
-func WriteGoConfig(filepath string, configMeta *mate.Config) error {
-	_, pkgName := path.Split(filepath)
-	goStr := toGoConfig(configMeta, pkgName)
-	goFilepath := path.Join(filepath, configMeta.Filename+".go")
+// func WriteGoConfig(filepath string, configMeta *mate.GoConfig) error {
+// 	_, pkgName := path.Split(filepath)
+// 	goStr := toGoConfig(configMeta, pkgName)
+// 	goFilepath := path.Join(filepath, configMeta.Filename+".go")
 
-	return os.WriteFile(goFilepath, []byte(goStr), os.ModePerm)
+// 	return os.WriteFile(goFilepath, []byte(goStr), os.ModePerm)
+// }
+
+func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
+	tmpl, err := gotemplate.ParseFiles("./template/golang/config.tmpl")
+	if err != nil {
+		return err
+	}
+
+	for _, meta := range configMetas {
+		if err = writeGoConfig(meta, tmpl, filepath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func toGoConfig(configMeta *mate.Config, pkgName string) string {
+func writeGoConfig(configMeta *meta.Config, tmpl *gotemplate.Template, filepath string) error {
+	goFilepath := path.Join(filepath, configMeta.Filename+".go")
+	file, err := os.Create(goFilepath)
+	if err != nil {
+		return err
+	}
+
+	conf := parseGoConfig(configMeta)
+	_, pkgName := path.Split(filepath)
+
+	conf.Package = pkgName
+
+	return tmpl.Execute(file, &conf)
+}
+
+func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 	var (
-		structName       = consts.UnderlineToCamelCase(configMeta.Filename, true)
-		configName       = consts.UnderlineToCamelCase(configMeta.Filename, false)
-		exportConfigName = structName
-		keyType          = configMeta.KeyField.Type
-		keyFieldName     = toGoFieldName(configMeta.KeyField.Name, true)
-		filename         = configMeta.Filename
-		fields           = ""
+		filename     = configMeta.Filename
+		configName   = consts.UnderlineToCamelCase(configMeta.Filename, false)
+		exportName   = consts.UnderlineToCamelCase(configMeta.Filename, true)
+		rowName      = configName
+		keyType      = configMeta.KeyField.Type
+		keyFieldName = toGoFieldName(configMeta.KeyField.Name, true)
+		fields       []string
 	)
 
 	for _, f := range configMeta.Fields {
 		var (
 			fieldName = toGoFieldName(f.Name, true)
 			goType    = toGoType(f.Type, f.TypeParams...)
+			field     string
 		)
 
 		if f.Desc == "" {
-			fields += fmt.Sprintf("%s %s `json:\"%s\"`\r\n", fieldName, goType, f.Name)
+			field = fmt.Sprintf("%s %s `json:\"%s\"`\r\n", fieldName, goType, f.Name)
 		} else {
-			fields += fmt.Sprintf("%s %s `json:\"%s\"` // %s\r\n", fieldName, goType, f.Name, f.Desc)
+			field = fmt.Sprintf("%s %s `json:\"%s\"` // %s\r\n", fieldName, goType, f.Name, f.Desc)
 		}
+
+		fields = append(fields, field)
 	}
 
-	goStr := strings.ReplaceAll(template.GoConfig, string(template.StructName), structName)
-	goStr = strings.ReplaceAll(goStr, string(template.ConfigName), configName)
-	goStr = strings.ReplaceAll(goStr, string(template.ExportConfigName), exportConfigName)
-	goStr = strings.ReplaceAll(goStr, string(template.KeyType), string(keyType))
-	goStr = strings.ReplaceAll(goStr, string(template.KeyFieldName), keyFieldName)
-	goStr = strings.ReplaceAll(goStr, string(template.Fields), fields)
-	goStr = strings.ReplaceAll(goStr, string(template.Filename), filename)
-	goStr = strings.ReplaceAll(goStr, string(template.PackageName), pkgName)
-	return goStr
+	return template.GoConfig{
+		Filename:     filename,
+		ConfigName:   configName,
+		ExportName:   exportName,
+		RowName:      rowName,
+		RowFields:    fields,
+		KeyType:      string(keyType),
+		KeyFieldName: keyFieldName,
+	}
 }
 
 func toGoFieldName(fieldName string, export bool) string {
@@ -87,21 +124,63 @@ func toGoType(dataType consts.DataType, params ...string) string {
 	return string(dataType)
 }
 
-func WriteGoConfigMgr(filepath string, mates []*mate.Config) error {
-	_, pkgName := path.Split(filepath)
-
-	registerConfigs := ""
-	for _, mate := range mates {
-		exportConfigName := consts.UnderlineToCamelCase(mate.Filename, true)
-		registerConfigs += strings.ReplaceAll(template.GoRegister, string(template.ExportConfigName), exportConfigName)
-		registerConfigs += "\n"
+func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
+	tmpl, err := gotemplate.ParseFiles("./template/golang/config_mgr.tmpl")
+	if err != nil {
+		return err
 	}
 
-	goStr := strings.ReplaceAll(template.GoConfigMgr, string(template.PackageName), pkgName)
-	goStr = strings.ReplaceAll(goStr, string(template.RegisterConfigs), registerConfigs)
+	_, pkgName := path.Split(filepath)
+	conf := template.GoConfigMgr{
+		Package: pkgName,
+		Configs: []string{},
+	}
 
-	goFilepath := path.Join(filepath, "configmgr.go")
+	for _, meta := range metas {
+		exportName := consts.UnderlineToCamelCase(meta.Filename, true)
+		conf.Configs = append(conf.Configs, exportName)
+	}
 
-	return os.WriteFile(goFilepath, []byte(goStr), os.ModePerm)
+	goFilepath := path.Join(filepath, "config_mgr.go")
+	file, err := os.Create(goFilepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return tmpl.Execute(file, &conf)
 }
 
+func WriteGoEnums(filepath string, enums []*types.EnumType) error {
+	tmpl, err := gotemplate.ParseFiles("./template/golang/enums.tmpl")
+	if err != nil {
+		return err
+	}
+
+	_, pkgName := path.Split(filepath)
+	conf := template.GoEnums{
+		Package: pkgName,
+		Enums:   make([][]template.GoEnum, 0, len(enums)),
+	}
+
+	for _, enumType := range enums {
+		goEnum := []template.GoEnum{}
+		for _, node := range enumType.Nodes {
+			name := fmt.Sprintf("%s_%s", enumType.Name, node.Key)
+			goEnum = append(goEnum, template.GoEnum{
+				Key:   name,
+				Value: node.Value,
+			})
+		}
+		conf.Enums = append(conf.Enums, goEnum)
+	}
+
+	goFilepath := path.Join(filepath, "enums.go")
+	file, err := os.Create(goFilepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return tmpl.Execute(file, &conf)
+}

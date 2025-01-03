@@ -1,4 +1,4 @@
-package mate
+package meta
 
 var (
 	NoRule  = &Rule{}

@@ -1,16 +1,17 @@
 package main
 
 import (
+	"github.com/lgynico/alpaca/types"
 	"log"
 	"os/exec"
 
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/rule"
 	"github.com/lgynico/alpaca/value"
 	"github.com/lgynico/alpaca/writer"
 )
 
-type executor func(metaList []*mate.Config) error
+type executor func(metaList []*meta.Config) error
 
 var executors = []executor{
 	parseRule,
@@ -21,7 +22,7 @@ var executors = []executor{
 	genGO,
 }
 
-func parseRule(mates []*mate.Config) error {
+func parseRule(mates []*meta.Config) error {
 	log.Println("parse rules ...")
 	for _, mate := range mates {
 		if err := rule.Parser.Visit(mate); err != nil {
@@ -34,7 +35,7 @@ func parseRule(mates []*mate.Config) error {
 	return nil
 }
 
-func checkRule(mates []*mate.Config) error {
+func checkRule(mates []*meta.Config) error {
 	log.Println("check rules ...")
 	for _, mate := range mates {
 		if err := rule.Checker.Visit(mate); err != nil {
@@ -46,7 +47,7 @@ func checkRule(mates []*mate.Config) error {
 	log.Println("check rules SUCCEED")
 	return nil
 }
-func parseValue(mates []*mate.Config) error {
+func parseValue(mates []*meta.Config) error {
 	log.Println("parse values ...")
 	for _, mate := range mates {
 		if err := value.Parser.Visit(mate); err != nil {
@@ -59,7 +60,7 @@ func parseValue(mates []*mate.Config) error {
 	return nil
 }
 
-func genJSON(mates []*mate.Config) error {
+func genJSON(mates []*meta.Config) error {
 	if len(json_out) == 0 {
 		return nil
 	}
@@ -73,18 +74,20 @@ func genJSON(mates []*mate.Config) error {
 	return nil
 }
 
-func genGO(mates []*mate.Config) error {
+func genGO(mates []*meta.Config) error {
 	if len(go_out) == 0 {
 		return nil
 	}
 
-	for _, mate := range mates {
-		if err := writer.WriteGoConfig(go_out, mate); err != nil {
-			return err
-		}
+	if err := writer.WriteGoConfigs(go_out, mates); err != nil {
+		return err
 	}
 
 	if err := writer.WriteGoConfigMgr(go_out, mates); err != nil {
+		return err
+	}
+
+	if err := writer.WriteGoEnums(go_out, types.Enums()); err != nil {
 		return err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/meta"
 )
 
 var Parser = &parser{
@@ -23,7 +23,7 @@ type parser struct {
 	patterns []*regexp.Regexp
 }
 
-func (p *parser) Visit(configMeta *mate.Config) error {
+func (p *parser) Visit(configMeta *meta.Config) error {
 	for _, field := range configMeta.Fields {
 		field.RuleMeta = p.parseRule(field.Rule)
 	}
@@ -31,9 +31,9 @@ func (p *parser) Visit(configMeta *mate.Config) error {
 	return nil
 }
 
-func (p *parser) parseRule(value string) mate.Rule {
+func (p *parser) parseRule(value string) meta.Rule {
 	if len(value) == 0 {
-		return *mate.NoRule
+		return *meta.NoRule
 	}
 
 	for _, pattern := range p.patterns {
@@ -51,12 +51,12 @@ func (p *parser) parseRule(value string) mate.Rule {
 			params = strings.Split(ss[2], ",")
 		}
 
-		return mate.Rule{
+		return meta.Rule{
 			Origin: value,
 			Key:    key,
 			Params: params,
 		}
 	}
 
-	return *mate.ErrRule
+	return *meta.ErrRule
 }

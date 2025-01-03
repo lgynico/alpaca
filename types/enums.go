@@ -25,15 +25,23 @@ type (
 	}
 )
 
-var enums = map[string]*EnumType{}
+var enums = []*EnumType{}
 
 func GetEnum(name string) (*EnumType, bool) {
-	enum, ok := enums[name]
-	return enum, ok
+	for _, enum := range enums {
+		if enum.Name == name {
+			return enum, true
+		}
+	}
+	return nil, false
 }
 
-func Enums() map[string]*EnumType {
-	return enums
+func Enums() []*EnumType {
+	var res []*EnumType
+	for _, enumType := range enums {
+		res = append(res, enumType)
+	}
+	return res
 }
 
 func ParseEnum(dir string) error {
@@ -79,7 +87,7 @@ func ParseEnum(dir string) error {
 				})
 			}
 
-			enums[name] = enum
+			enums = append(enums, enum)
 		}
 	}
 

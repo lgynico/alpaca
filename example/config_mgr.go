@@ -1,8 +1,6 @@
 package example
 
-import (
-	"fmt"
-)
+import "fmt"
 
 var ConfigMgr = &configMgr{
 	Configs: map[string]Config{},
