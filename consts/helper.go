@@ -8,13 +8,14 @@ import (
 	"strings"
 
 	"github.com/emirpasic/gods/stacks/arraystack"
+	"github.com/lgynico/alpaca/types"
 )
 
 func isPrimaryType(dataType DataType) bool {
 	switch dataType {
 	case Bool,
-		Int, Int8, Int32, Int64,
-		Uint, Uint8, Uint32, Uint64,
+		Int, Int8, Int16, Int32, Int64,
+		Uint, Uint8, Uint16, Uint32, Uint64,
 		Float, Double,
 		String:
 		return true
@@ -48,6 +49,11 @@ func ParseDataType(typeStr string) (DataType, []string) {
 		return Map, []string{keyType, valueType}
 	}
 
+	if strings.HasPrefix(typeStr, string(Enum)) {
+		_, subType, _ := strings.Cut(typeStr, ":")
+		return Enum, []string{subType}
+	}
+
 	return Unknown, nil
 }
 
@@ -57,12 +63,16 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 		return strconv.ParseInt(rawValue, 10, 64)
 	case Int32:
 		return strconv.ParseInt(rawValue, 10, 32)
+	case Int16:
+		return strconv.ParseInt(rawValue, 10, 16)
 	case Int8:
 		return strconv.ParseInt(rawValue, 10, 8)
 	case Uint, Uint64:
 		return strconv.ParseUint(rawValue, 10, 64)
 	case Uint32:
 		return strconv.ParseUint(rawValue, 10, 32)
+	case Uint16:
+		return strconv.ParseUint(rawValue, 10, 16)
 	case Uint8:
 		return strconv.ParseUint(rawValue, 10, 8)
 	case Float:
@@ -144,6 +154,21 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 		}
 
 		return m, nil
+
+	case Enum:
+		enumName := params[0]
+		enum, ok := types.GetEnum(enumName)
+		if !ok {
+			return nil, fmt.Errorf("enum %s not found", enumName)
+		}
+
+		for _, node := range enum.Nodes {
+			if node.Key == rawValue {
+				return node.Value, nil
+			}
+		}
+
+		return nil, fmt.Errorf("unknow enum value: %s_%s", enumName, rawValue)
 	}
 
 	return nil, errors.New("unknown type")

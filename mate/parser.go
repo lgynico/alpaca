@@ -30,6 +30,10 @@ func Parse(dir string) ([]*Config, error) {
 			continue
 		}
 
+		if strings.HasPrefix(entry.Name(), "__enum__") {
+			continue
+		}
+
 		meta, err := parse(path.Join(dir, entry.Name()))
 		if err != nil {
 			return nil, err

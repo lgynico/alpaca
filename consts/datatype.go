@@ -21,4 +21,5 @@ const (
 	Array   DataType = "array"
 	Array2  DataType = "array2"
 	Map     DataType = "map"
+	Enum    DataType = "enum"
 )

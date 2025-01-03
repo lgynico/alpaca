@@ -103,3 +103,17 @@ func (c *configMgr) Load(configPath string) {
 `
 
 const GoRegister = `c.Register(${exportConfigName})`
+
+const GoEnumField = `${EnumName}_${EnumField} = ${EnumValue}`
+
+const GoEnumBlock = `
+const (
+	${EnumFields}
+)
+`
+
+const GoEnums = `
+package ${packageName}
+
+${EnumBlocks}
+`

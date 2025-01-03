@@ -31,8 +31,16 @@ func toGoConfig(configMeta *mate.Config, pkgName string) string {
 	)
 
 	for _, f := range configMeta.Fields {
-		fields += fmt.Sprintf("%s %s `json:\"%s\"` // %s\r\n",
-			toGoFieldName(f.Name, true), toGoType(f.Type, f.TypeParams...), f.Name, f.Desc)
+		var (
+			fieldName = toGoFieldName(f.Name, true)
+			goType    = toGoType(f.Type, f.TypeParams...)
+		)
+
+		if f.Desc == "" {
+			fields += fmt.Sprintf("%s %s `json:\"%s\"`\r\n", fieldName, goType, f.Name)
+		} else {
+			fields += fmt.Sprintf("%s %s `json:\"%s\"` // %s\r\n", fieldName, goType, f.Name, f.Desc)
+		}
 	}
 
 	goStr := strings.ReplaceAll(template.GoConfig, string(template.StructName), structName)
@@ -72,6 +80,8 @@ func toGoType(dataType consts.DataType, params ...string) string {
 		valDataType, valParams := consts.ParseDataType(params[1])
 		valType := toGoType(valDataType, valParams...)
 		return fmt.Sprintf("map[%s]%s", keyType, valType)
+	case consts.Enum:
+		return "int32"
 	}
 
 	return string(dataType)
@@ -94,3 +104,4 @@ func WriteGoConfigMgr(filepath string, mates []*mate.Config) error {
 
 	return os.WriteFile(goFilepath, []byte(goStr), os.ModePerm)
 }
+

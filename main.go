@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/lgynico/alpaca/mate"
+	"github.com/lgynico/alpaca/types"
 )
 
 var (
@@ -32,6 +33,10 @@ func main() {
 		fmt.Fprintln(w, err.Error())
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	if err := types.ParseEnum(config_dir); err != nil {
+		panic(err)
 	}
 
 	mates, err := mate.Parse(config_dir)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os/exec"
 
 	"github.com/lgynico/alpaca/mate"
 	"github.com/lgynico/alpaca/rule"
@@ -83,5 +84,9 @@ func genGO(mates []*mate.Config) error {
 		}
 	}
 
-	return writer.WriteGoConfigMgr(go_out, mates)
+	if err := writer.WriteGoConfigMgr(go_out, mates); err != nil {
+		return err
+	}
+
+	return exec.Command("gofmt", "-w", go_out).Run()
 }
