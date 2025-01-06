@@ -15,14 +15,6 @@ import (
 	"github.com/lgynico/alpaca/template"
 )
 
-// func WriteGoConfig(filepath string, configMeta *mate.GoConfig) error {
-// 	_, pkgName := path.Split(filepath)
-// 	goStr := toGoConfig(configMeta, pkgName)
-// 	goFilepath := path.Join(filepath, configMeta.Filename+".go")
-
-// 	return os.WriteFile(goFilepath, []byte(goStr), os.ModePerm)
-// }
-
 func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
 	tmpl, err := gotemplate.ParseFiles("./template/golang/config.tmpl")
 	if err != nil {

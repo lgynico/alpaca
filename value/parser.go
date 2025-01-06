@@ -12,8 +12,8 @@ var Parser = &parser{}
 type parser struct {
 }
 
-func (p *parser) Visit(configMate *meta.Config) error {
-	for _, field := range configMate.Fields {
+func (p *parser) Visit(configMeta *meta.Config) error {
+	for _, field := range configMeta.Fields {
 		if err := p.parseFieldValues(field); err != nil {
 			return fmt.Errorf("value parse error on field %s: %v", field.Name, err)
 		}

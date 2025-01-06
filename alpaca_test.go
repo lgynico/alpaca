@@ -13,18 +13,18 @@ func TestCheckRule(t *testing.T) {
 	config_dir = "./example"
 	go_out = "./example"
 
-	mates, err := meta.Parse(config_dir)
+	metas, err := meta.Parse(config_dir)
 	if err != nil {
 		panic(err)
 	}
 
-	if err = parseRule(mates); err != nil {
+	if err = parseRule(metas); err != nil {
 		t.Fatal(err)
 	}
-	if err = parseValue(mates); err != nil {
+	if err = parseValue(metas); err != nil {
 		t.Fatal(err)
 	}
-	if err = checkRule(mates); err != nil {
+	if err = checkRule(metas); err != nil {
 		t.Fatal(err)
 	}
 

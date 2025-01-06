@@ -323,3 +323,25 @@ func addQuote(value string) string {
 
 	return value
 }
+
+func DefaultStringValue(dataType DataType) string {
+	switch dataType {
+	case Bool:
+		return "false"
+	case Int, Int8, Int16, Int32, Int64,
+		Uint, Uint8, Uint16, Uint32, Uint64:
+		return "0"
+	case Float, Double:
+		return "0.0"
+	case String:
+		return "\"\""
+	case Array, Array2:
+		return "[]"
+	case Map:
+		return "{}"
+	case Enum:
+		return "0"
+	}
+
+	return ""
+}

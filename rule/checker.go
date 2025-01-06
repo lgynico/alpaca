@@ -19,7 +19,6 @@ var Checker = &checker{
 		consts.RangeRule:   rangeRuleCheck,
 		consts.LengthRule:  lengthRuleCheck,
 		consts.DecimalRule: decimalRuleCheck,
-		consts.EnumRule:    enumRuleCheck,
 	},
 }
 
@@ -154,19 +153,6 @@ func lengthRuleCheck(meta *meta.Config, field *meta.Field) error {
 
 func decimalRuleCheck(meta *meta.Config, field *meta.Field) error {
 	// TODO: trim decimal
-	return nil
-}
-
-func enumRuleCheck(meta *meta.Config, field *meta.Field) error {
-outer:
-	for _, rawValue := range field.RawValues {
-		for _, param := range field.RuleMeta.Params {
-			if rawValue == param {
-				continue outer
-			}
-		}
-		return errors.New("not a enum value")
-	}
 	return nil
 }
 

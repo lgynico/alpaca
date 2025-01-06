@@ -25,7 +25,12 @@ func toJSON(configMeta *meta.Config) string {
 				jsonArr[j] += ","
 			}
 
-			value := consts.ToString(reflect.ValueOf(field.Values[j]))
+			var value string
+			if field.Values[j] != nil {
+				value = consts.ToString(reflect.ValueOf(field.Values[j]))
+			} else {
+				value = consts.DefaultStringValue(field.Type)
+			}
 			jsonArr[j] += fmt.Sprintf("%q:%s", field.Name, value)
 		}
 	}

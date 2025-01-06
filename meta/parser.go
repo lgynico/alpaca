@@ -2,18 +2,19 @@ package meta
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/lgynico/alpaca/consts"
+	"github.com/lgynico/alpaca/types"
 	"github.com/xuri/excelize/v2"
 )
 
 func Parse(dir string) ([]*Config, error) {
-	log.Println("parse excel files ... ")
+	fmt.Println("parse excel files ... ")
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,8 @@ func Parse(dir string) ([]*Config, error) {
 			continue
 		}
 
-		if strings.HasPrefix(entry.Name(), "__enum__") {
+		if strings.HasPrefix(entry.Name(), types.EnumFilename) ||
+			strings.HasPrefix(entry.Name(), "__const__") {
 			continue
 		}
 
@@ -39,11 +41,11 @@ func Parse(dir string) ([]*Config, error) {
 			return nil, err
 		}
 
-		log.Printf("parse [%s] SUCCEED !", entry.Name())
+		fmt.Printf("parse [%s] SUCCEED !\r\n", entry.Name())
 		metaList = append(metaList, meta...)
 	}
 
-	log.Printf("parse excel files SUCCEED (total: %d)", len(metaList))
+	fmt.Printf("parse excel files SUCCEED (total: %d)\r\n", len(metaList))
 	return metaList, nil
 }
 
@@ -145,7 +147,7 @@ func parse(filepath string) ([]*Config, error) {
 
 func prefix(filepath string) string {
 	filename := path.Base(filepath)
-	return strings.TrimRight(filename, path.Ext(filename))
+	return strings.TrimSuffix(filename, path.Ext(filename))
 }
 
 func fixedRows(rows [][]string) [][]string {

@@ -27,35 +27,50 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
+	checkFlag()
+	parseEnum()
+	parseConst()
+	parseConfig()
+}
 
-	if err := checkFlags(); err != nil {
-		fmt.Fprintln(w, err.Error())
-		flag.Usage()
-		os.Exit(1)
-	}
-
+func parseEnum() {
 	if err := types.ParseEnum(config_dir); err != nil {
 		panic(err)
 	}
+}
 
-	mates, err := meta.Parse(config_dir)
+func parseConst() {
+
+}
+
+func parseConfig() {
+	metas, err := meta.Parse(config_dir)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, exec := range executors {
-		if err = exec(mates); err != nil {
+		if err = exec(metas); err != nil {
 			panic(err)
 		}
 	}
 }
 
+func checkFlag() {
+	flag.Parse()
+
+	if err := checkFlags(); err != nil {
+		_, _ = fmt.Fprintln(w, err.Error())
+		flag.Usage()
+		os.Exit(1)
+	}
+}
+
 func usage() {
-	fmt.Fprintln(w, "Usage:")
-	fmt.Fprintln(w, "  alpaca [flags]")
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "Flags:")
+	_, _ = fmt.Fprintln(w, "Usage:")
+	_, _ = fmt.Fprintln(w, "  alpaca [flags]")
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprintln(w, "Flags:")
 	flag.CommandLine.PrintDefaults()
 }
 

@@ -10,5 +10,4 @@ const (
 	RangeRule   RuleType = "range"
 	LengthRule  RuleType = "length"
 	DecimalRule RuleType = "decimal"
-	EnumRule    RuleType = "enum"
 )
