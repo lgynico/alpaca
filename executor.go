@@ -104,17 +104,21 @@ func genGO(metas []*meta.Config) error {
 	}
 	fmt.Println("< write go enums SUCCEED !")
 
-	if err := exec.Command("gofmt", "-w", go_out).Run(); err != nil {
-		fmt.Printf("format go codes FAILED: %v\r\n", err)
+	if err := os.Chdir(go_out); err == nil {
+		if err := exec.Command("gofmt", "-w", ".").Run(); err != nil {
+			fmt.Printf("format go codes FAILED: %v\r\n", err)
+		} else {
+			fmt.Println("< format go codes SUCCEED !")
+		}
 	} else {
-		fmt.Println("< format go codes SUCCEED !")
+		fmt.Printf("format go codes FAILED: %v\r\n", err)
 	}
 
 	return nil
 }
 
 func mkdir(dir string) {
-	if err := os.MkdirAll(dir, 0666); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		panic(err)
 	}
 }
