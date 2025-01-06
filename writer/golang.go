@@ -1,6 +1,7 @@
 package writer
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path"
@@ -15,8 +16,19 @@ import (
 	"github.com/lgynico/alpaca/template"
 )
 
+var (
+	//go:embed template/golang/config.tmpl
+	GoConfigTemplate string
+
+	//go:embed template/golang/config_mgr.tmpl
+	GoConfigMgrTemplate string
+
+	//go:embed template/golang/enums.tmpl
+	GoEnumsTemplate string
+)
+
 func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
-	tmpl, err := gotemplate.ParseFiles("./template/golang/config.tmpl")
+	tmpl, err := gotemplate.New("GoConfig").Parse(GoConfigTemplate)
 	if err != nil {
 		return err
 	}
@@ -117,7 +129,7 @@ func toGoType(dataType consts.DataType, params ...string) string {
 }
 
 func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
-	tmpl, err := gotemplate.ParseFiles("./template/golang/config_mgr.tmpl")
+	tmpl, err := gotemplate.New("GoConfigMgr").Parse(GoConfigMgrTemplate)
 	if err != nil {
 		return err
 	}
@@ -144,7 +156,7 @@ func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
 }
 
 func WriteGoEnums(filepath string, enums []*types.EnumType) error {
-	tmpl, err := gotemplate.ParseFiles("./template/golang/enums.tmpl")
+	tmpl, err := gotemplate.New("GoEnums").Parse(GoEnumsTemplate)
 	if err != nil {
 		return err
 	}
@@ -156,7 +168,7 @@ func WriteGoEnums(filepath string, enums []*types.EnumType) error {
 	}
 
 	for _, enumType := range enums {
-		goEnum := []template.GoEnum{}
+		var goEnum []template.GoEnum
 		for _, node := range enumType.Nodes {
 			name := fmt.Sprintf("%s_%s", enumType.Name, node.Key)
 			goEnum = append(goEnum, template.GoEnum{
