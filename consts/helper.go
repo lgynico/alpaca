@@ -58,6 +58,8 @@ func ParseDataType(typeStr string) (DataType, []string) {
 }
 
 func ParseValue(rawValue string, dataType DataType, params ...string) (any, error) {
+	rawValue = originOrDefault(dataType, rawValue)
+
 	switch dataType {
 	case Int, Int64:
 		return strconv.ParseInt(rawValue, 10, 64)
@@ -344,4 +346,12 @@ func DefaultStringValue(dataType DataType) string {
 	}
 
 	return ""
+}
+
+func originOrDefault(dataType DataType, origin string) string {
+	if len(origin) > 0 {
+		return origin
+	}
+
+	return DefaultStringValue(dataType)
 }

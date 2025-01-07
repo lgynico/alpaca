@@ -53,7 +53,7 @@ func parseValue(metas []*meta.Config) error {
 	fmt.Println("> parse values ...")
 	for _, meta := range metas {
 		if err := value.Parser.Visit(meta); err != nil {
-			return nil
+			return err
 		}
 		fmt.Printf("parse [%s] value SUCCEED !\r\n", meta.Filename)
 	}
