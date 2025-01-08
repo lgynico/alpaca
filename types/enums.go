@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/lgynico/alpaca/consts"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -37,22 +38,18 @@ func GetEnum(name string) (*EnumType, bool) {
 }
 
 func Enums() []*EnumType {
-	var res []*EnumType
-	for _, enumType := range enums {
-		res = append(res, enumType)
-	}
-	return res
+	return enums
 }
 
 func ParseEnum(dir string) error {
 	var (
-		filename = fmt.Sprintf("%s/%s.xlsx", dir, EnumFilename)
+		filename = fmt.Sprintf("%s/%s.xlsx", dir, consts.FilenameEnum)
 		file     *excelize.File
 		err      error
 	)
 
 	if file, err = excelize.OpenFile(filename); err != nil {
-		filename = fmt.Sprintf("%s/%s.xls", dir, EnumFilename)
+		filename = fmt.Sprintf("%s/%s.xls", dir, consts.FilenameEnum)
 		if file, err = excelize.OpenFile(filename); err != nil {
 			return nil
 		}
@@ -107,9 +104,9 @@ func groupEnumRows(rows [][]string) map[string]*enumRows {
 			m[row[0]] = currEnum
 		}
 
-		if row[1] == EnumFieldKey {
+		if row[1] == consts.EnumFieldKey {
 			currEnum.keyRow = row[2:]
-		} else if row[1] == EnumFieldValue {
+		} else if row[1] == consts.EnumFieldValue {
 			currEnum.valueRow = row[2:]
 		}
 	}

@@ -18,6 +18,10 @@ var (
 	w = flag.CommandLine.Output()
 )
 
+var (
+	configMetas []*meta.Config
+)
+
 func init() {
 	flag.StringVar(&config_dir, "dir", "", "path to excel config files")
 	flag.StringVar(&json_out, "json_out", "", "path to output json files")
@@ -29,18 +33,14 @@ func init() {
 func main() {
 	checkFlag()
 	parseEnum()
-	parseConst()
 	parseConfig()
+	generateFiles()
 }
 
 func parseEnum() {
 	if err := types.ParseEnum(config_dir); err != nil {
 		panic(err)
 	}
-}
-
-func parseConst() {
-
 }
 
 func parseConfig() {
@@ -54,6 +54,8 @@ func parseConfig() {
 			panic(err)
 		}
 	}
+
+	configMetas = metas
 }
 
 func checkFlag() {
@@ -84,4 +86,12 @@ func checkFlags() error {
 	}
 
 	return nil
+}
+
+func generateFiles() {
+	for _, f := range generators {
+		if err := f(configMetas); err != nil {
+			panic(err)
+		}
+	}
 }

@@ -1,4 +1,4 @@
-package consts
+package helper
 
 import (
 	"errors"
@@ -8,86 +8,87 @@ import (
 	"strings"
 
 	"github.com/emirpasic/gods/stacks/arraystack"
+	"github.com/lgynico/alpaca/consts"
 	"github.com/lgynico/alpaca/types"
 )
 
-func isPrimaryType(dataType DataType) bool {
+func isPrimaryType(dataType consts.DataType) bool {
 	switch dataType {
-	case Bool,
-		Int, Int8, Int16, Int32, Int64,
-		Uint, Uint8, Uint16, Uint32, Uint64,
-		Float, Double,
-		String:
+	case consts.Bool,
+		consts.Int, consts.Int8, consts.Int16, consts.Int32, consts.Int64,
+		consts.Uint, consts.Uint8, consts.Uint16, consts.Uint32, consts.Uint64,
+		consts.Float, consts.Double,
+		consts.String:
 		return true
 	}
 
 	return false
 }
 
-func ParseDataType(typeStr string) (DataType, []string) {
-	dataType := DataType(typeStr)
+func ParseDataType(typeStr string) (consts.DataType, []string) {
+	dataType := consts.DataType(typeStr)
 	if isPrimaryType(dataType) {
 		return dataType, nil
 	}
 
 	// array2:xxx
-	if strings.HasPrefix(typeStr, string(Array2)) {
+	if strings.HasPrefix(typeStr, string(consts.Array2)) {
 		_, subType, _ := strings.Cut(typeStr, ":")
-		return Array2, []string{subType}
+		return consts.Array2, []string{subType}
 	}
 
 	// array:xxx
-	if strings.HasPrefix(typeStr, string(Array)) {
+	if strings.HasPrefix(typeStr, string(consts.Array)) {
 		_, subType, _ := strings.Cut(typeStr, ":")
-		return Array, []string{subType}
+		return consts.Array, []string{subType}
 	}
 
 	// map:xxx,xxx
-	if strings.HasPrefix(typeStr, string(Map)) {
+	if strings.HasPrefix(typeStr, string(consts.Map)) {
 		_, subType, _ := strings.Cut(typeStr, ":")
 		keyType, valueType, _ := strings.Cut(subType, ",")
-		return Map, []string{keyType, valueType}
+		return consts.Map, []string{keyType, valueType}
 	}
 
-	if strings.HasPrefix(typeStr, string(Enum)) {
+	if strings.HasPrefix(typeStr, string(consts.Enum)) {
 		_, subType, _ := strings.Cut(typeStr, ":")
-		return Enum, []string{subType}
+		return consts.Enum, []string{subType}
 	}
 
-	return Unknown, nil
+	return consts.Unknown, nil
 }
 
-func ParseValue(rawValue string, dataType DataType, params ...string) (any, error) {
+func ParseValue(rawValue string, dataType consts.DataType, params ...string) (any, error) {
 	rawValue = originOrDefault(dataType, rawValue)
 
 	switch dataType {
-	case Int, Int64:
+	case consts.Int, consts.Int64:
 		return strconv.ParseInt(rawValue, 10, 64)
-	case Int32:
+	case consts.Int32:
 		return strconv.ParseInt(rawValue, 10, 32)
-	case Int16:
+	case consts.Int16:
 		return strconv.ParseInt(rawValue, 10, 16)
-	case Int8:
+	case consts.Int8:
 		return strconv.ParseInt(rawValue, 10, 8)
-	case Uint, Uint64:
+	case consts.Uint, consts.Uint64:
 		return strconv.ParseUint(rawValue, 10, 64)
-	case Uint32:
+	case consts.Uint32:
 		return strconv.ParseUint(rawValue, 10, 32)
-	case Uint16:
+	case consts.Uint16:
 		return strconv.ParseUint(rawValue, 10, 16)
-	case Uint8:
+	case consts.Uint8:
 		return strconv.ParseUint(rawValue, 10, 8)
-	case Float:
+	case consts.Float:
 		return strconv.ParseFloat(rawValue, 32)
-	case Double:
+	case consts.Double:
 		return strconv.ParseFloat(rawValue, 64)
-	case String:
+	case consts.String:
 		rawValue = strings.TrimPrefix(rawValue, "\"")
 		rawValue = strings.TrimSuffix(rawValue, "\"")
 		return rawValue, nil
-	case Bool:
+	case consts.Bool:
 		return strconv.ParseBool(rawValue)
-	case Array:
+	case consts.Array:
 		arr := []any{}
 		dataType, params := ParseDataType(params[0])
 		trimValue := strings.TrimPrefix(rawValue, "[")
@@ -108,7 +109,7 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 		}
 
 		return arr, nil
-	case Array2:
+	case consts.Array2:
 		arr := []any{}
 		trimValue := strings.TrimPrefix(rawValue, "[")
 		trimValue = strings.TrimSuffix(trimValue, "]")
@@ -119,7 +120,7 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 			err    error
 		)
 		for len(remain) > 0 {
-			value, remain, err = readValue(remain, Array, ",", params...)
+			value, remain, err = readValue(remain, consts.Array, ",", params...)
 			if err != nil {
 				return nil, err
 			}
@@ -128,7 +129,7 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 		}
 
 		return arr, nil
-	case Map:
+	case consts.Map:
 		m := map[any]any{}
 		trimValue := strings.TrimPrefix(rawValue, "{")
 		trimValue = strings.TrimSuffix(trimValue, "}")
@@ -157,7 +158,7 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 
 		return m, nil
 
-	case Enum:
+	case consts.Enum:
 		enumName := params[0]
 		enum, ok := types.GetEnum(enumName)
 		if !ok {
@@ -176,14 +177,14 @@ func ParseValue(rawValue string, dataType DataType, params ...string) (any, erro
 	return nil, errors.New("unknown type")
 }
 
-func readValue(rawValue string, dataType DataType, valSep string, params ...string) (any, string, error) {
+func readValue(rawValue string, dataType consts.DataType, valSep string, params ...string) (any, string, error) {
 	if isPrimaryType(dataType) {
 		beParse, remain, _ := strings.Cut(rawValue, valSep)
 		value, err := ParseValue(beParse, dataType)
 		return value, remain, err
 	}
 
-	if dataType == Array || dataType == Array2 {
+	if dataType == consts.Array || dataType == consts.Array2 {
 		beParse := ""
 		stack := arraystack.New()
 
@@ -218,7 +219,7 @@ func readValue(rawValue string, dataType DataType, valSep string, params ...stri
 
 	}
 
-	if dataType == Map {
+	if dataType == consts.Map {
 		beParse := ""
 		stack := arraystack.New()
 		i := 0
@@ -241,7 +242,7 @@ func readValue(rawValue string, dataType DataType, valSep string, params ...stri
 			return nil, rawValue, fmt.Errorf("unparsable string for type %s: %s", dataType, rawValue)
 		}
 
-		value, err := ParseValue(beParse, Map, params...)
+		value, err := ParseValue(beParse, consts.Map, params...)
 		if err != nil {
 			return nil, rawValue, err
 		}
@@ -326,29 +327,29 @@ func addQuote(value string) string {
 	return value
 }
 
-func DefaultStringValue(dataType DataType) string {
+func DefaultStringValue(dataType consts.DataType) string {
 	switch dataType {
-	case Bool:
+	case consts.Bool:
 		return "false"
-	case Int, Int8, Int16, Int32, Int64,
-		Uint, Uint8, Uint16, Uint32, Uint64:
+	case consts.Int, consts.Int8, consts.Int16, consts.Int32, consts.Int64,
+		consts.Uint, consts.Uint8, consts.Uint16, consts.Uint32, consts.Uint64:
 		return "0"
-	case Float, Double:
+	case consts.Float, consts.Double:
 		return "0.0"
-	case String:
+	case consts.String:
 		return "\"\""
-	case Array, Array2:
+	case consts.Array, consts.Array2:
 		return "[]"
-	case Map:
+	case consts.Map:
 		return "{}"
-	case Enum:
+	case consts.Enum:
 		return "0"
 	}
 
 	return ""
 }
 
-func originOrDefault(dataType DataType, origin string) string {
+func originOrDefault(dataType consts.DataType, origin string) string {
 	if len(origin) > 0 {
 		return origin
 	}

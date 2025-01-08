@@ -1,0 +1,28 @@
+package {{.Package}}
+
+import (
+	"encoding/json"
+	"os"
+	"path"
+)
+
+var Consts = &constsConfig{}
+
+type constsConfig struct {
+	{{range .RowFields}}{{.}} {{end}}
+}
+
+func (c *constsConfig) Load(dir string) {
+	data, err := os.ReadFile(path.Join(dir, c.Filename()+".json"))
+	if err != nil {
+		panic("load config error: " + err.Error())
+	}
+
+	if err = json.Unmarshal(data, &c); err != nil {
+		panic("parse config error: " + err.Error())
+	}
+}
+
+func (c *constsConfig) Filename() string {
+	return "{{.Filename}}"
+}

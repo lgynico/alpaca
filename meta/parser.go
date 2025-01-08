@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/lgynico/alpaca/consts"
-	"github.com/lgynico/alpaca/types"
+	"github.com/lgynico/alpaca/helper"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -31,12 +31,12 @@ func Parse(dir string) ([]*Config, error) {
 			continue
 		}
 
-		if strings.HasPrefix(entry.Name(), types.EnumFilename) ||
-			strings.HasPrefix(entry.Name(), "__const__") {
+		if strings.HasPrefix(entry.Name(), consts.FilenameEnum) {
 			continue
 		}
 
-		meta, err := parse(path.Join(dir, entry.Name()))
+		isConst := strings.HasPrefix(entry.Name(), consts.FilenameConst)
+		meta, err := parse(path.Join(dir, entry.Name()), isConst)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +49,7 @@ func Parse(dir string) ([]*Config, error) {
 	return metaList, nil
 }
 
-func parse(filepath string) ([]*Config, error) {
+func parse(filepath string, isConst bool) ([]*Config, error) {
 	file, err := excelize.OpenFile(filepath)
 	if err != nil {
 		return nil, err
@@ -60,28 +60,39 @@ func parse(filepath string) ([]*Config, error) {
 	metas := []*Config{}
 
 	for _, sheet := range file.WorkBook.Sheets.Sheet {
-		rows, err := file.GetRows(sheet.Name)
+		var (
+			datas [][]string
+			err   error
+		)
+
+		if isConst {
+			datas, err = file.GetCols(sheet.Name)
+		} else {
+			datas, err = file.GetRows(sheet.Name)
+		}
+
 		if err != nil {
 			return nil, err
 		}
 
-		if len(rows) < 2 {
+		if len(datas) < 2 {
 			return nil, errors.New("row count lack")
 		}
 
-		rows = fixedRows(rows)
+		datas = fixedRows(datas)
 
 		var (
-			nameRow []string
-			typeRow []string
-			sideRow []string
-			descRow []string
-			ruleRow []string
+			nameRow  []string
+			typeRow  []string
+			sideRow  []string
+			descRow  []string
+			ruleRow  []string
+			valueRow []string // only for const
 		)
 
 		i := 0
-		for ; i < len(rows); i++ {
-			row := rows[i]
+		for ; i < len(datas); i++ {
+			row := datas[i]
 			if len(row[0]) == 0 {
 				break
 			}
@@ -97,30 +108,43 @@ func parse(filepath string) ([]*Config, error) {
 				descRow = row
 			case consts.RuleRow:
 				ruleRow = row
+			case consts.ValueRow:
+				valueRow = row
 			}
 		}
 
 		if nameRow == nil || typeRow == nil {
 			return nil, errors.New("name/type row lack")
 		}
+		if isConst && valueRow == nil {
+			return nil, errors.New("lack value row for const")
+		}
 
 		if sideRow == nil {
-			sideRow = make([]string, len(rows[0]))
+			sideRow = make([]string, len(datas[0]))
 		}
 		if descRow == nil {
-			descRow = make([]string, len(rows[0]))
+			descRow = make([]string, len(datas[0]))
 		}
 		if ruleRow == nil {
-			ruleRow = make([]string, len(rows[0]))
+			ruleRow = make([]string, len(datas[0]))
+		}
+
+		var filename string
+		if isConst {
+			filename = "consts"
+		} else {
+			filename = prefix + "_" + strings.ToLower(sheet.Name)
 		}
 
 		meta := &Config{
-			Filename: prefix + "_" + strings.ToLower(sheet.Name),
+			IsConst:  isConst,
+			Filename: filename,
 			Fields:   []*Field{},
 		}
 
 		for j := 1; j < len(nameRow); j++ {
-			dataType, typeParams := consts.ParseDataType(typeRow[j])
+			dataType, typeParams := helper.ParseDataType(typeRow[j])
 			field := &Field{
 				Name:       nameRow[j],
 				Type:       dataType,
@@ -133,13 +157,27 @@ func parse(filepath string) ([]*Config, error) {
 			meta.Fields = append(meta.Fields, field)
 		}
 
-		for ; i < len(rows); i++ {
-			for j := 1; j < len(rows[i]); j++ {
-				meta.Fields[j-1].RawValues = append(meta.Fields[j-1].RawValues, rows[i][j])
+		if isConst {
+			for i := 0; i < len(meta.Fields); i++ {
+				meta.Fields[i].RawValues = append(meta.Fields[i].RawValues, valueRow[i+1])
+			}
+		} else {
+			for ; i < len(datas); i++ {
+				for j := 1; j < len(datas[i]); j++ {
+					meta.Fields[j-1].RawValues = append(meta.Fields[j-1].RawValues, datas[i][j])
+				}
 			}
 		}
 
 		metas = append(metas, meta)
+	}
+
+	if isConst {
+		metaMerge := metas[0]
+		for i := 1; i < len(metas); i++ {
+			metaMerge.Fields = append(metaMerge.Fields, metas[i].Fields...)
+		}
+		metas = []*Config{metaMerge}
 	}
 
 	return metas, nil

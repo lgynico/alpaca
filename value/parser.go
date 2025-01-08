@@ -3,7 +3,7 @@ package value
 import (
 	"fmt"
 
-	"github.com/lgynico/alpaca/consts"
+	"github.com/lgynico/alpaca/helper"
 	"github.com/lgynico/alpaca/meta"
 )
 
@@ -24,7 +24,7 @@ func (p *parser) Visit(configMeta *meta.Config) error {
 func (p *parser) parseFieldValues(f *meta.Field) error {
 	f.Values = make([]any, len(f.RawValues))
 	for i, rawValue := range f.RawValues {
-		value, err := consts.ParseValue(rawValue, f.Type, f.TypeParams...)
+		value, err := helper.ParseValue(rawValue, f.Type, f.TypeParams...)
 		if err != nil {
 			return err
 		}

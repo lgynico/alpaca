@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/lgynico/alpaca/helper"
 	"github.com/lgynico/alpaca/types"
 
 	gotemplate "text/template"
@@ -25,16 +26,28 @@ var (
 
 	//go:embed template/golang/enums.tmpl
 	GoEnumsTemplate string
+
+	//go:embed template/golang/consts.tmpl
+	GoConstsTemplate string
 )
 
 func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
-	tmpl, err := gotemplate.New("GoConfig").Parse(GoConfigTemplate)
+	configTmpl, err := gotemplate.New("GoConfig").Parse(GoConfigTemplate)
+	if err != nil {
+		return err
+	}
+	constsTmpl, err := gotemplate.New("GoConsts").Parse(GoConstsTemplate)
 	if err != nil {
 		return err
 	}
 
 	for _, meta := range configMetas {
-		if err = writeGoConfig(meta, tmpl, filepath); err != nil {
+		if meta.IsConst {
+			err = writeGoConfig(meta, constsTmpl, filepath)
+		} else {
+			err = writeGoConfig(meta, configTmpl, filepath)
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -60,13 +73,18 @@ func writeGoConfig(configMeta *meta.Config, tmpl *gotemplate.Template, filepath 
 func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 	var (
 		filename     = configMeta.Filename
-		configName   = consts.UnderlineToCamelCase(configMeta.Filename, false)
-		exportName   = consts.UnderlineToCamelCase(configMeta.Filename, true)
+		configName   = helper.UnderlineToCamelCase(configMeta.Filename, false)
+		exportName   = helper.UnderlineToCamelCase(configMeta.Filename, true)
 		rowName      = configName
-		keyType      = configMeta.KeyField.Type
-		keyFieldName = toGoFieldName(configMeta.KeyField.Name, true)
+		keyType      = consts.Unknown
+		keyFieldName = ""
 		fields       []string
 	)
+
+	if !configMeta.IsConst {
+		keyType = configMeta.KeyField.Type
+		keyFieldName = toGoFieldName(configMeta.KeyField.Name, true)
+	}
 
 	for _, f := range configMeta.Fields {
 		var (
@@ -110,15 +128,15 @@ func toGoType(dataType consts.DataType, params ...string) string {
 	case consts.Double:
 		return "float64"
 	case consts.Array:
-		elemDataType, elemParams := consts.ParseDataType(params[0])
+		elemDataType, elemParams := helper.ParseDataType(params[0])
 		return fmt.Sprintf("[]%s", toGoType(elemDataType, elemParams...))
 	case consts.Array2:
-		elemDataType, elemParams := consts.ParseDataType(params[0])
+		elemDataType, elemParams := helper.ParseDataType(params[0])
 		return fmt.Sprintf("[][]%s", toGoType(elemDataType, elemParams...))
 	case consts.Map:
-		keyDataType, keyParams := consts.ParseDataType(params[0])
+		keyDataType, keyParams := helper.ParseDataType(params[0])
 		keyType := toGoType(keyDataType, keyParams...)
-		valDataType, valParams := consts.ParseDataType(params[1])
+		valDataType, valParams := helper.ParseDataType(params[1])
 		valType := toGoType(valDataType, valParams...)
 		return fmt.Sprintf("map[%s]%s", keyType, valType)
 	case consts.Enum:
@@ -141,7 +159,7 @@ func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
 	}
 
 	for _, meta := range metas {
-		exportName := consts.UnderlineToCamelCase(meta.Filename, true)
+		exportName := helper.UnderlineToCamelCase(meta.Filename, true)
 		conf.Configs = append(conf.Configs, exportName)
 	}
 
