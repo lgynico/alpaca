@@ -5,21 +5,39 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strings"
 
+	"github.com/lgynico/alpaca/consts"
 	"github.com/lgynico/alpaca/helper"
 	"github.com/lgynico/alpaca/meta"
 )
 
 func WriteJSON(filepath string, configMeta *meta.Config) error {
-	jsonStr := toJSON(configMeta)
-	jsonFilepath := path.Join(filepath, configMeta.Filename+".json")
+	var (
+		jsonStr      string
+		jsonFilepath string
+	)
+
+	jsonStr = toJSON(configMeta, consts.SideServer)
+	jsonFilepath = path.Join(filepath, consts.OutputServer, configMeta.Filename+".json")
+	if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
+		return err
+	}
+
+	jsonStr = toJSON(configMeta, consts.SideClient)
+	jsonFilepath = path.Join(filepath, consts.OutputClient, configMeta.Filename+".json")
 	return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
 }
 
-func toJSON(configMeta *meta.Config) string {
+func toJSON(configMeta *meta.Config, side consts.Side) string {
 	jsonArr := make([]string, len(configMeta.Fields[0].Values))
 
 	for i, field := range configMeta.Fields {
+
+		if !side(field.Side) {
+			continue
+		}
+
 		for j := 0; j < len(field.Values); j++ {
 			if configMeta.IsConst {
 				jsonArr[j] += "\t"
@@ -50,7 +68,7 @@ func toJSON(configMeta *meta.Config) string {
 
 	jsonStr := "[\r\n"
 	for i, v := range jsonArr {
-		jsonStr += "\t{" + v + "}"
+		jsonStr += "\t{" + strings.TrimRight(v, ",") + "}"
 		if i < len(jsonArr)-1 {
 			jsonStr += ","
 		}

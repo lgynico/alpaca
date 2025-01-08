@@ -255,9 +255,7 @@ func readValue(rawValue string, dataType consts.DataType, valSep string, params 
 }
 
 func ToString(value reflect.Value) string {
-	t := value.Type()
-
-	switch t.Kind() {
+	switch value.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return strconv.FormatInt(value.Int(), 10)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:

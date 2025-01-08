@@ -11,7 +11,6 @@ var TestSheet1 = &testSheet1Config{}
 type (
 	testSheet1Row struct {
 		I       int            `json:"i"` // 一个int类型值
-		I8      int8           `json:"i8"`
 		I32     int32          `json:"i32"`
 		I64     int64          `json:"i64"`
 		U       uint           `json:"u"`

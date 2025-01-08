@@ -9,9 +9,6 @@ import (
 var Consts = &constsConfig{}
 
 type constsConfig struct {
-	ConstInt    int            `json:"ConstInt"` // 这是一个常量
-	ConstInt8   int8           `json:"ConstInt8"`
-	ConstInt16  int16          `json:"ConstInt16"`
 	ConstInt32  int32          `json:"ConstInt32"`
 	ConstInt64  int64          `json:"ConstInt64"`
 	ConstUint   uint           `json:"ConstUint"`

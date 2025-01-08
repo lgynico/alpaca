@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/lgynico/alpaca/consts"
 	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/types"
 	"github.com/lgynico/alpaca/writer"
@@ -21,6 +22,8 @@ func genJSON(metas []*meta.Config) error {
 	}
 
 	mkdir(json_out)
+	mkdir(json_out + "/" + consts.OutputClient)
+	mkdir(json_out + "/" + consts.OutputServer)
 
 	fmt.Println("> write json ...")
 	for _, meta := range metas {

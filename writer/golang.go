@@ -87,6 +87,10 @@ func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 	}
 
 	for _, f := range configMeta.Fields {
+		if !consts.SideServer(f.Side) {
+			continue
+		}
+
 		var (
 			fieldName = toGoFieldName(f.Name, true)
 			goType    = toGoType(f.Type, f.TypeParams...)
