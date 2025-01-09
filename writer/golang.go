@@ -44,7 +44,7 @@ func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
 	for _, meta := range configMetas {
 		if meta.IsConst {
 			err = writeGoConfig(meta, constsTmpl, filepath)
-		} else {
+		} else if consts.SideServer(meta.KeyField.Side) {
 			err = writeGoConfig(meta, configTmpl, filepath)
 		}
 		if err != nil {

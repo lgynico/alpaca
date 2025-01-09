@@ -18,15 +18,21 @@ func WriteJSON(filepath string, configMeta *meta.Config) error {
 		jsonFilepath string
 	)
 
-	jsonStr = toJSON(configMeta, consts.SideServer)
-	jsonFilepath = path.Join(filepath, consts.OutputServer, configMeta.Filename+".json")
-	if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
-		return err
+	if !configMeta.IsConst && consts.SideServer(configMeta.KeyField.Side) {
+		jsonStr = toJSON(configMeta, consts.SideServer)
+		jsonFilepath = path.Join(filepath, consts.OutputServer, configMeta.Filename+".json")
+		if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
+			return err
+		}
 	}
 
-	jsonStr = toJSON(configMeta, consts.SideClient)
-	jsonFilepath = path.Join(filepath, consts.OutputClient, configMeta.Filename+".json")
-	return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
+	if !configMeta.IsConst && consts.SideClient(configMeta.KeyField.Side) {
+		jsonStr = toJSON(configMeta, consts.SideClient)
+		jsonFilepath = path.Join(filepath, consts.OutputClient, configMeta.Filename+".json")
+		return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
+	}
+
+	return nil
 }
 
 func toJSON(configMeta *meta.Config, side consts.Side) string {
