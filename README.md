@@ -49,6 +49,8 @@ alpaca -dir=/path/to/excels -json_out=/path/to/gen/json -go_out=/path/to/gen/go
 ### 常量配置
 
 ![常量配置](assets/const.png)
+常量表必须命令为 `__const__.xls` 或者 `__const__.xlsx`
+
 常量配置属于特殊的基础配置，本质就是把基础表的一行数据变成一列，因此字段类型跟基础配置是一样的。
 
 > ps: key rule 对常量配置无效
