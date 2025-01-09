@@ -189,19 +189,18 @@ func readValue(rawValue string, dataType consts.DataType, valSep string, params 
 		stack := arraystack.New()
 
 		i := 0
-		for ; i < len(rawValue); i++ {
-			c := rawValue[i]
-			beParse += string(c)
-
-			if c == '[' {
-				stack.Push(c)
-			} else if c == ']' {
+		for j, s := range rawValue {
+			beParse += string(s)
+			if s == '[' {
+				stack.Push(s)
+			} else if s == ']' {
 				stack.Pop()
 			}
 
 			if stack.Empty() {
 				break
 			}
+			i = j + 1
 		}
 
 		if !stack.Empty() || i+1 < len(rawValue) && rawValue[i+1] != ',' {
