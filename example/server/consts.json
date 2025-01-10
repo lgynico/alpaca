@@ -12,6 +12,6 @@
 	"ConstBool":true,
 	"ConstArray":["I","Love","Game"],
 	"ConstArray2":[[1,2,3],[4,5,6]],
-	"ConstMap":{"Dog":4,"Apple":1,"Banana":2,"Cat":3},
+	"ConstMap":{"Apple":1,"Banana":2,"Cat":3,"Dog":4},
 	"ConstEnum":3
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emirpasic/gods/stacks/arraystack"
 	"github.com/lgynico/alpaca/consts"
 	"github.com/lgynico/alpaca/types"
 )
@@ -186,7 +185,7 @@ func readValue(rawValue string, dataType consts.DataType, valSep string, params 
 
 	if dataType == consts.Array || dataType == consts.Array2 {
 		beParse := ""
-		stack := arraystack.New()
+		stack := Stack{}
 
 		i := 0
 		for j, s := range rawValue {
@@ -197,13 +196,13 @@ func readValue(rawValue string, dataType consts.DataType, valSep string, params 
 				stack.Pop()
 			}
 
-			if stack.Empty() {
+			if stack.IsEmpty() {
 				break
 			}
 			i = j + 1
 		}
 
-		if !stack.Empty() || i+1 < len(rawValue) && rawValue[i+1] != ',' {
+		if !stack.IsEmpty() || i+1 < len(rawValue) && rawValue[i+1] != ',' {
 			return nil, rawValue, fmt.Errorf("unparsable string for type %s: %s", dataType, rawValue)
 		}
 
@@ -220,24 +219,25 @@ func readValue(rawValue string, dataType consts.DataType, valSep string, params 
 
 	if dataType == consts.Map {
 		beParse := ""
-		stack := arraystack.New()
+		stack := Stack{}
 		i := 0
-		for ; i < len(rawValue); i++ {
-			c := rawValue[i]
-			beParse += string(c)
+		for j, s := range rawValue {
+			beParse += string(s)
 
-			if c == '{' {
-				stack.Push(c)
-			} else if c == '}' {
+			if s == '{' {
+				stack.Push(s)
+			} else if s == '}' {
 				stack.Pop()
 			}
 
-			if stack.Empty() {
+			if stack.IsEmpty() {
 				break
 			}
+
+			i = j + 1
 		}
 
-		if !stack.Empty() || i+1 < len(rawValue) && rawValue[i+1] != ',' {
+		if !stack.IsEmpty() || i+1 < len(rawValue) && rawValue[i+1] != ',' {
 			return nil, rawValue, fmt.Errorf("unparsable string for type %s: %s", dataType, rawValue)
 		}
 

@@ -18,7 +18,7 @@ func WriteJSON(filepath string, configMeta *meta.Config) error {
 		jsonFilepath string
 	)
 
-	if !configMeta.IsConst && consts.SideServer(configMeta.KeyField.Side) {
+	if configMeta.IsConst || consts.SideServer(configMeta.KeyField.Side) {
 		jsonStr = toJSON(configMeta, consts.SideServer)
 		jsonFilepath = path.Join(filepath, consts.OutputServer, configMeta.Filename+".json")
 		if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
@@ -26,7 +26,7 @@ func WriteJSON(filepath string, configMeta *meta.Config) error {
 		}
 	}
 
-	if !configMeta.IsConst && consts.SideClient(configMeta.KeyField.Side) {
+	if configMeta.IsConst || consts.SideClient(configMeta.KeyField.Side) {
 		jsonStr = toJSON(configMeta, consts.SideClient)
 		jsonFilepath = path.Join(filepath, consts.OutputClient, configMeta.Filename+".json")
 		return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)

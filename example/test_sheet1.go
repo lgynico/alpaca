@@ -10,21 +10,23 @@ var TestSheet1 = &testSheet1Config{}
 
 type (
 	testSheet1Row struct {
-		I       int            `json:"i"` // 一个int类型值
-		I32     int32          `json:"i32"`
-		I64     int64          `json:"i64"`
-		U       uint           `json:"u"`
-		U8      uint8          `json:"u8"`
-		U32     uint32         `json:"u32"`
-		U64     uint64         `json:"u64"`
-		F       float32        `json:"f"`
-		D       float64        `json:"d"`
-		S       string         `json:"s"`
-		A       []int          `json:"a"`
-		A2      [][]string     `json:"a2"`
-		M       map[int]string `json:"m"`
-		B       bool           `json:"b"`
-		Weekday int32          `json:"weekday"`
+		I       int              `json:"i"` // 一个int类型值
+		I32     int32            `json:"i32"`
+		I64     int64            `json:"i64"`
+		U       uint             `json:"u"`
+		U8      uint8            `json:"u8"`
+		U32     uint32           `json:"u32"`
+		U64     uint64           `json:"u64"`
+		F       float32          `json:"f"`
+		D       float64          `json:"d"`
+		S       string           `json:"s"`
+		A       []int            `json:"a"`
+		A2      [][]string       `json:"a2"`
+		M       map[int]string   `json:"m"`
+		B       bool             `json:"b"`
+		Weekday int32            `json:"weekday"`
+		Nested  []map[int]string `json:"nested"` // 嵌套类型
+
 	}
 
 	testSheet1Config struct {

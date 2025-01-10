@@ -17,26 +17,26 @@ import (
 	"github.com/lgynico/alpaca/template"
 )
 
-var (
-	//go:embed template/golang/config.tmpl
-	GoConfigTemplate string
+// var (
+// 	//go:embed template/golang/config.tmpl
+// 	GoConfigTemplate string
 
-	//go:embed template/golang/config_mgr.tmpl
-	GoConfigMgrTemplate string
+// 	//go:embed template/golang/config_mgr.tmpl
+// 	GoConfigMgrTemplate string
 
-	//go:embed template/golang/enums.tmpl
-	GoEnumsTemplate string
+// 	//go:embed template/golang/enums.tmpl
+// 	GoEnumsTemplate string
 
-	//go:embed template/golang/consts.tmpl
-	GoConstsTemplate string
-)
+// 	//go:embed template/golang/consts.tmpl
+// 	GoConstsTemplate string
+// )
 
 func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
-	configTmpl, err := gotemplate.New("GoConfig").Parse(GoConfigTemplate)
+	configTmpl, err := gotemplate.New("GoConfig").Parse(template.GoConfigTemplate)
 	if err != nil {
 		return err
 	}
-	constsTmpl, err := gotemplate.New("GoConsts").Parse(GoConstsTemplate)
+	constsTmpl, err := gotemplate.New("GoConsts").Parse(template.GoConstsTemplate)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func toGoType(dataType consts.DataType, params ...string) string {
 }
 
 func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
-	tmpl, err := gotemplate.New("GoConfigMgr").Parse(GoConfigMgrTemplate)
+	tmpl, err := gotemplate.New("GoConfigMgr").Parse(template.GoConfigMgrTemplate)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
 }
 
 func WriteGoEnums(filepath string, enums []*types.EnumType) error {
-	tmpl, err := gotemplate.New("GoEnums").Parse(GoEnumsTemplate)
+	tmpl, err := gotemplate.New("GoEnums").Parse(template.GoEnumsTemplate)
 	if err != nil {
 		return err
 	}
