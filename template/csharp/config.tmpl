@@ -1,0 +1,44 @@
+using System.Text.Json;
+
+namespace {{.Namespace}}
+{
+    public class {{.ConfigName}}Config
+    {
+        {{range .ConfigFields}}{{if .Desc}}/// <summary>
+        /// {{.Desc}}
+        /// </summary>{{end}}
+        public {{.Type}} {{.Name}} { get; set; }
+        {{end}}
+    }
+
+    public class {{.ConfigName}}Configs : IConfig
+    {
+
+        private readonly Dictionary<{{.KeyType}}, {{.ConfigName}}Config> configs = [];
+
+        public string Filename()
+        {
+            return "{{.Filename}}";
+        }
+
+        public void Load(string filepath)
+        {
+            string jsonStr = File.ReadAllText(filepath + "/" + Filename() + ".json");
+
+            var configs = JsonSerializer.Deserialize<List<{{.ConfigName}}Config>>(jsonStr, ConfigMgr.options);
+            if (configs != null)
+            {
+                foreach (var conf in configs)
+                {
+                    this.configs.Add(conf.{{.KeyFieldName}}, conf);
+                }
+            }
+        }
+
+        public {{.ConfigName}}Config? Get({{.KeyType}} key)
+        {
+            configs.TryGetValue(key, out {{.ConfigName}}Config? config);
+            return config;
+        }
+    }
+}

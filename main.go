@@ -14,6 +14,7 @@ var (
 	config_dir string
 	json_out   string
 	go_out     string
+	cs_out     string
 
 	w = flag.CommandLine.Output()
 )
@@ -26,6 +27,7 @@ func init() {
 	flag.StringVar(&config_dir, "dir", "", "path to excel config files")
 	flag.StringVar(&json_out, "json_out", "", "path to output json files")
 	flag.StringVar(&go_out, "go_out", "", "path to output golang files")
+	flag.StringVar(&cs_out, "cs_out", "", "path to output c# files")
 
 	flag.Usage = usage
 }
@@ -81,7 +83,7 @@ func checkFlags() error {
 		return errors.New("flag -dir is require")
 	}
 
-	if len(json_out) == 0 && len(go_out) == 0 {
+	if len(json_out) == 0 && len(go_out) == 0 && len(cs_out) == 0 {
 		return errors.New("specify at least one *_out flag")
 	}
 

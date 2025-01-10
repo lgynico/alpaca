@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 
 	"github.com/lgynico/alpaca/consts"
+	"github.com/lgynico/alpaca/helper"
 	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/types"
 	"github.com/lgynico/alpaca/writer"
@@ -14,6 +16,7 @@ import (
 var generators = []func(metas []*meta.Config) error{
 	genJSON,
 	genGO,
+	genCSharp,
 }
 
 func genJSON(metas []*meta.Config) error {
@@ -21,9 +24,12 @@ func genJSON(metas []*meta.Config) error {
 		return nil
 	}
 
-	mkdir(json_out)
-	mkdir(json_out + "/" + consts.OutputClient)
-	mkdir(json_out + "/" + consts.OutputServer)
+	if err := helper.Mkdir(
+		path.Join(json_out, consts.OutputClient),
+		path.Join(json_out, consts.OutputServer),
+	); err != nil {
+		return err
+	}
 
 	fmt.Println("> write json ...")
 	for _, meta := range metas {
@@ -42,7 +48,9 @@ func genGO(metas []*meta.Config) error {
 		return nil
 	}
 
-	mkdir(go_out)
+	if err := helper.Mkdir(go_out); err != nil {
+		return err
+	}
 
 	fmt.Println("> write go configs ...")
 	if err := writer.WriteGoConfigs(go_out, metas); err != nil {
@@ -73,8 +81,30 @@ func genGO(metas []*meta.Config) error {
 	return nil
 }
 
-func mkdir(dir string) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		panic(err)
+func genCSharp(metas []*meta.Config) error {
+	if len(cs_out) == 0 {
+		return nil
 	}
+
+	if err := helper.Mkdir(cs_out); err != nil {
+		return err
+	}
+
+	fmt.Println("> write cs configs ...")
+	if err := writer.WriteCSharpConfigs(cs_out, metas); err != nil {
+		return err
+	}
+	fmt.Println("< write cs configs SUCCEED !")
+
+	if err := writer.WriteCSharpConfigMgr(cs_out, metas); err != nil {
+		return err
+	}
+	fmt.Println("< write cs ConfigMgr SUCCEED !")
+
+	if err := writer.WriteCSharpEnums(cs_out, types.Enums()); err != nil {
+		return err
+	}
+	fmt.Println("< write cs enums SUCCEED !")
+
+	return nil
 }

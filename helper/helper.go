@@ -3,6 +3,7 @@ package helper
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -296,18 +297,6 @@ func ToString(value reflect.Value) string {
 	return ""
 }
 
-func UnderlineToCamelCase(value string, capitalizeFirst bool) string {
-	ss := strings.Split(value, "_")
-	for i, v := range ss {
-		if i == 0 && !capitalizeFirst {
-			ss[i] = strings.ToLower(string(v[0])) + v[1:]
-		} else {
-			ss[i] = strings.ToUpper(string(v[0])) + v[1:]
-		}
-	}
-	return strings.Join(ss, "")
-}
-
 func addQuote(value string) string {
 	if len(value) == 0 {
 		return `""`
@@ -352,4 +341,14 @@ func originOrDefault(dataType consts.DataType, origin string) string {
 	}
 
 	return DefaultStringValue(dataType)
+}
+
+func Mkdir(dir ...string) error {
+	for _, d := range dir {
+		if err := os.MkdirAll(d, 0755); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

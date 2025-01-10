@@ -1,0 +1,54 @@
+using System.Text.Json;
+
+namespace {{.Namespace}}
+{
+
+    public interface IConfig
+    {
+        void Load(string filepath);
+        string Filename();
+    }
+
+    public class ConfigMgr
+    {
+        internal static readonly JsonSerializerOptions options = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        public static ConfigMgr Instance { get; private set; } = new ConfigMgr();
+        private readonly Dictionary<Type, IConfig> configs = [];
+
+        private ConfigMgr() { }
+
+        public void Init()
+        {
+            {{range .Configs}}Register(new {{.}}());
+	        {{end}}
+        }
+
+        public void Register(IConfig config)
+        {
+            configs.Add(config.GetType(), config);
+        }
+
+        public void Load(string filepath)
+        {
+            foreach (var config in configs)
+            {
+                config.Value.Load(filepath);
+            }
+            configs.Remove(typeof(Consts));
+        }
+
+        public T? GetConfgs<T>() where T : IConfig
+        {
+            if (configs.TryGetValue(typeof(T), out IConfig? config))
+            {
+                return (T)config;
+            }
+
+            return default;
+        }
+    }
+}

@@ -1,0 +1,12 @@
+namespace {{.Namespace}}
+{
+
+{{range $_, $enum := .Enums}}
+    public enum {{$enum.Name}}
+    {
+        {{range $_, $e := $enum.Fields}}{{index $e 0}} = {{index $e 1}},
+        {{end}}
+    }
+
+{{end}}
+}

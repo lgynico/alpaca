@@ -1,7 +1,6 @@
 package writer
 
 import (
-	_ "embed"
 	"fmt"
 	"os"
 	"path"
@@ -16,20 +15,6 @@ import (
 	"github.com/lgynico/alpaca/meta"
 	"github.com/lgynico/alpaca/template"
 )
-
-// var (
-// 	//go:embed template/golang/config.tmpl
-// 	GoConfigTemplate string
-
-// 	//go:embed template/golang/config_mgr.tmpl
-// 	GoConfigMgrTemplate string
-
-// 	//go:embed template/golang/enums.tmpl
-// 	GoEnumsTemplate string
-
-// 	//go:embed template/golang/consts.tmpl
-// 	GoConstsTemplate string
-// )
 
 func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
 	configTmpl, err := gotemplate.New("GoConfig").Parse(template.GoConfigTemplate)
