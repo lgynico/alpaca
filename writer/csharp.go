@@ -20,9 +20,10 @@ import (
 type CSharpWriter struct {
 	output    string
 	namespace string
+	side      consts.Side
 }
 
-func NewCSharpWriter(dir string) *CSharpWriter {
+func NewCSharpWriter(dir string, side consts.Side) *CSharpWriter {
 	var (
 		output       = path.Join(dir, "csharp", "Config")
 		_, namespace = path.Split(output)
@@ -31,6 +32,7 @@ func NewCSharpWriter(dir string) *CSharpWriter {
 	return &CSharpWriter{
 		output:    output,
 		namespace: helper.CapitalizeLeading(namespace),
+		side:      side,
 	}
 }
 
@@ -79,7 +81,7 @@ func (p *CSharpWriter) writeConfigs(configMetas []*meta.Config) error {
 	for _, meta := range configMetas {
 		if meta.IsConst {
 			err = p.writeConfig(meta, constsTmpl)
-		} else if consts.SideServer(meta.KeyField.Side) {
+		} else if p.side(meta.KeyField.Side) {
 			err = p.writeConfig(meta, configTmpl)
 		}
 		if err != nil {
@@ -110,11 +112,15 @@ func (p *CSharpWriter) parseConfig(configMeta *meta.Config) template.CSharpConfi
 	}
 
 	if !configMeta.IsConst {
-		conf.KeyType = string(configMeta.KeyField.Type)
+		conf.KeyType = p.toTypeName(configMeta.KeyField.Type)
 		conf.KeyFieldName = p.toFieldName(configMeta.KeyField.Name)
 	}
 
 	for _, f := range configMeta.Fields {
+		if !p.side(f.Side) {
+			continue
+		}
+
 		conf.ConfigFields = append(conf.ConfigFields, template.CSharpConfigField{
 			Name: p.toFieldName(f.Name),
 			Type: p.toTypeName(f.Type, f.TypeParams...),

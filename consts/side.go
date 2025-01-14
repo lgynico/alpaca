@@ -12,6 +12,9 @@ type Side func(string) bool
 var (
 	SideClient Side = func(s string) bool { return len(s) == 0 || clientReg.MatchString(s) }
 	SideServer Side = func(s string) bool { return len(s) == 0 || serverReg.MatchString(s) }
+	SideAll    Side = func(s string) bool {
+		return len(s) == 0 || clientReg.MatchString(s) && serverReg.MatchString(s)
+	}
 )
 
 const (

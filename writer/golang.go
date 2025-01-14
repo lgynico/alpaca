@@ -20,9 +20,10 @@ import (
 type GoWriter struct {
 	output  string
 	pkgName string
+	side    consts.Side
 }
 
-func NewGoWriter(dir string) *GoWriter {
+func NewGoWriter(dir string, side consts.Side) *GoWriter {
 	var (
 		output     = path.Join(dir, "go", "conf")
 		_, pkgName = path.Split(output)
@@ -31,6 +32,7 @@ func NewGoWriter(dir string) *GoWriter {
 	return &GoWriter{
 		output:  path.Join(dir, "go", "conf"),
 		pkgName: pkgName,
+		side:    side,
 	}
 }
 
@@ -81,7 +83,7 @@ func (p *GoWriter) writeConfigs(configMetas []*meta.Config) error {
 	for _, meta := range configMetas {
 		if meta.IsConst {
 			err = p.writeConfig(meta, constsTmpl)
-		} else if consts.SideServer(meta.KeyField.Side) {
+		} else if p.side(meta.KeyField.Side) {
 			err = p.writeConfig(meta, configTmpl)
 		}
 		if err != nil {
@@ -120,7 +122,7 @@ func (p *GoWriter) parseConfig(configMeta *meta.Config) template.GoConfig {
 	}
 
 	for _, f := range configMeta.Fields {
-		if !consts.SideServer(f.Side) {
+		if !p.side(f.Side) {
 			continue
 		}
 
@@ -146,7 +148,7 @@ func (p *GoWriter) parseConfig(configMeta *meta.Config) template.GoConfig {
 		ExportName:   exportName,
 		RowName:      rowName,
 		RowFields:    fields,
-		KeyType:      string(keyType),
+		KeyType:      p.toTypeName(keyType),
 		KeyFieldName: keyFieldName,
 	}
 }
@@ -196,7 +198,7 @@ func (p *GoWriter) writeConfigMgr(metas []*meta.Config) error {
 	}
 
 	for _, m := range metas {
-		if m.IsConst || consts.SideServer(m.KeyField.Side) {
+		if m.IsConst || p.side(m.KeyField.Side) {
 			exportName := helper.UnderlineToCamelCase(m.Filename, true)
 			conf.Configs = append(conf.Configs, exportName)
 		}
@@ -247,6 +249,11 @@ func (p *GoWriter) writeEnums() error {
 }
 
 func (p *GoWriter) formatCodes() {
+	origDir, err := os.Getwd()
+	if err != nil {
+		fmt.Printf("get current directory FAILED: %v\r\n", err)
+	}
+
 	if err := os.Chdir(p.OutputDir()); err == nil {
 		if err := exec.Command("gofmt", "-w", ".").Run(); err != nil {
 			fmt.Printf("format go codes FAILED: %v\r\n", err)
@@ -255,5 +262,9 @@ func (p *GoWriter) formatCodes() {
 		}
 	} else {
 		fmt.Printf("format go codes FAILED: %v\r\n", err)
+	}
+
+	if err := os.Chdir(origDir); err != nil {
+		fmt.Printf("restore original directory FAILED: %v\r\n", err)
 	}
 }
