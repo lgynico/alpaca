@@ -17,7 +17,56 @@ import (
 	"github.com/lgynico/alpaca/template"
 )
 
-func WriteCSharpConfigs(filepath string, configMetas []*meta.Config) error {
+type CSharpWriter struct {
+	output    string
+	namespace string
+}
+
+func NewCSharpWriter(dir string) *CSharpWriter {
+	var (
+		output       = path.Join(dir, "csharp", "Config")
+		_, namespace = path.Split(output)
+	)
+
+	return &CSharpWriter{
+		output:    output,
+		namespace: helper.CapitalizeLeading(namespace),
+	}
+}
+
+func (p *CSharpWriter) mkdir() error {
+	return helper.Mkdir(p.OutputDir())
+}
+
+func (p *CSharpWriter) OutputDir() string {
+	return p.output
+}
+
+func (p *CSharpWriter) Write(configMetas []*meta.Config) error {
+	if err := p.mkdir(); err != nil {
+		return err
+	}
+
+	fmt.Println("> write cs configs ...")
+	if err := p.writeConfigs(configMetas); err != nil {
+		return err
+	}
+	fmt.Println("< write cs configs SUCCEED !")
+
+	if err := p.writeConfigMgr(configMetas); err != nil {
+		return err
+	}
+	fmt.Println("< write cs ConfigMgr SUCCEED !")
+
+	if err := p.writeEnums(); err != nil {
+		return err
+	}
+	fmt.Println("< write cs enums SUCCEED !")
+
+	return nil
+}
+
+func (p *CSharpWriter) writeConfigs(configMetas []*meta.Config) error {
 	configTmpl, err := gotemplate.New("CSharpConfig").Parse(template.CSharpConfigTemplate)
 	if err != nil {
 		return err
@@ -29,9 +78,9 @@ func WriteCSharpConfigs(filepath string, configMetas []*meta.Config) error {
 
 	for _, meta := range configMetas {
 		if meta.IsConst {
-			err = writeCSharpConfig(meta, constsTmpl, filepath)
+			err = p.writeConfig(meta, constsTmpl)
 		} else if consts.SideServer(meta.KeyField.Side) {
-			err = writeCSharpConfig(meta, configTmpl, filepath)
+			err = p.writeConfig(meta, configTmpl)
 		}
 		if err != nil {
 			return err
@@ -41,37 +90,34 @@ func WriteCSharpConfigs(filepath string, configMetas []*meta.Config) error {
 	return nil
 }
 
-func writeCSharpConfig(configMeta *meta.Config, tmpl *gotemplate.Template, filepath string) error {
+func (p *CSharpWriter) writeConfig(configMeta *meta.Config, tmpl *gotemplate.Template) error {
 	filename := helper.UnderlineToCamelCase(configMeta.Filename, true)
-	csFilepath := path.Join(filepath, filename+".cs")
+	csFilepath := path.Join(p.OutputDir(), filename+".cs")
 	file, err := os.Create(csFilepath)
 	if err != nil {
 		return err
 	}
 
-	conf := parseCSharpConfig(configMeta)
-	_, namespace := path.Split(filepath)
-
-	conf.Namespace = helper.CapitalizeLeading(namespace)
-
+	conf := p.parseConfig(configMeta)
 	return tmpl.Execute(file, &conf)
 }
 
-func parseCSharpConfig(configMeta *meta.Config) template.CSharpConfig {
+func (p *CSharpWriter) parseConfig(configMeta *meta.Config) template.CSharpConfig {
 	conf := template.CSharpConfig{
 		Filename:   configMeta.Filename,
 		ConfigName: helper.UnderlineToCamelCase(configMeta.Filename, true),
+		Namespace:  p.namespace,
 	}
 
 	if !configMeta.IsConst {
 		conf.KeyType = string(configMeta.KeyField.Type)
-		conf.KeyFieldName = toCSharpFieldName(configMeta.KeyField.Name)
+		conf.KeyFieldName = p.toFieldName(configMeta.KeyField.Name)
 	}
 
 	for _, f := range configMeta.Fields {
 		conf.ConfigFields = append(conf.ConfigFields, template.CSharpConfigField{
-			Name: toCSharpFieldName(f.Name),
-			Type: toCSharpType(f.Type, f.TypeParams...),
+			Name: p.toFieldName(f.Name),
+			Type: p.toTypeName(f.Type, f.TypeParams...),
 			Desc: f.Desc,
 		})
 	}
@@ -79,11 +125,11 @@ func parseCSharpConfig(configMeta *meta.Config) template.CSharpConfig {
 	return conf
 }
 
-func toCSharpFieldName(fieldName string) string {
+func (p *CSharpWriter) toFieldName(fieldName string) string {
 	return strings.ToUpper(string(fieldName[0])) + fieldName[1:]
 }
 
-func toCSharpType(dataType consts.DataType, params ...string) string {
+func (p *CSharpWriter) toTypeName(dataType consts.DataType, params ...string) string {
 	switch dataType {
 	case consts.Int, consts.Int32, consts.Enum:
 		return "int"
@@ -107,30 +153,29 @@ func toCSharpType(dataType consts.DataType, params ...string) string {
 		return "double"
 	case consts.Array:
 		elemDataType, elemParams := helper.ParseDataType(params[0])
-		return fmt.Sprintf("%s[]", toCSharpType(elemDataType, elemParams...))
+		return fmt.Sprintf("%s[]", p.toTypeName(elemDataType, elemParams...))
 	case consts.Array2:
 		elemDataType, elemParams := helper.ParseDataType(params[0])
-		return fmt.Sprintf("%s[][]", toCSharpType(elemDataType, elemParams...))
+		return fmt.Sprintf("%s[][]", p.toTypeName(elemDataType, elemParams...))
 	case consts.Map:
 		keyDataType, keyParams := helper.ParseDataType(params[0])
-		keyType := toCSharpType(keyDataType, keyParams...)
+		keyType := p.toTypeName(keyDataType, keyParams...)
 		valDataType, valParams := helper.ParseDataType(params[1])
-		valType := toCSharpType(valDataType, valParams...)
+		valType := p.toTypeName(valDataType, valParams...)
 		return fmt.Sprintf("Dictionary<%s, %s>", keyType, valType)
 	}
 
 	return string(dataType)
 }
 
-func WriteCSharpConfigMgr(filepath string, metas []*meta.Config) error {
+func (p *CSharpWriter) writeConfigMgr(metas []*meta.Config) error {
 	tmpl, err := gotemplate.New("CSharpConfigMgr").Parse(template.CSharpConfigMgrTemplate)
 	if err != nil {
 		return err
 	}
 
-	_, namespace := path.Split(filepath)
 	conf := template.CSharpConfigMgr{
-		Namespace: helper.CapitalizeLeading(namespace),
+		Namespace: p.namespace,
 		Configs:   []string{},
 	}
 
@@ -142,25 +187,25 @@ func WriteCSharpConfigMgr(filepath string, metas []*meta.Config) error {
 		conf.Configs = append(conf.Configs, configName)
 	}
 
-	csFilepath := path.Join(filepath, "ConfigMgr.cs")
+	csFilepath := path.Join(p.OutputDir(), "ConfigMgr.cs")
 	file, err := os.Create(csFilepath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return tmpl.Execute(file, &conf)
 }
 
-func WriteCSharpEnums(filepath string, enums []*types.EnumType) error {
+func (p *CSharpWriter) writeEnums() error {
 	tmpl, err := gotemplate.New("CSharpEnums").Parse(template.CSharpEnumsTemplate)
 	if err != nil {
 		return err
 	}
 
-	_, namespace := path.Split(filepath)
+	enums := types.Enums()
 	conf := template.CSharpEnums{
-		Namespace: helper.CapitalizeLeading(namespace),
+		Namespace: p.namespace,
 		Enums:     make([]template.CSharpEnum, 0, len(enums)),
 	}
 
@@ -177,12 +222,12 @@ func WriteCSharpEnums(filepath string, enums []*types.EnumType) error {
 		conf.Enums = append(conf.Enums, csharpEnum)
 	}
 
-	csFilepath := path.Join(filepath, "Enums.cs")
+	csFilepath := path.Join(p.OutputDir(), "Enums.cs")
 	file, err := os.Create(csFilepath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return tmpl.Execute(file, &conf)
 }

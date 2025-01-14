@@ -3,6 +3,7 @@ package writer
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -16,7 +17,58 @@ import (
 	"github.com/lgynico/alpaca/template"
 )
 
-func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
+type GoWriter struct {
+	output  string
+	pkgName string
+}
+
+func NewGoWriter(dir string) *GoWriter {
+	var (
+		output     = path.Join(dir, "go", "conf")
+		_, pkgName = path.Split(output)
+	)
+
+	return &GoWriter{
+		output:  path.Join(dir, "go", "conf"),
+		pkgName: pkgName,
+	}
+}
+
+func (p *GoWriter) mkdir() error {
+	return helper.Mkdir(p.OutputDir())
+}
+
+func (p *GoWriter) OutputDir() string {
+	return p.output
+}
+
+func (p *GoWriter) Write(configMetas []*meta.Config) error {
+	if err := p.mkdir(); err != nil {
+		return err
+	}
+
+	fmt.Println("> write go configs ...")
+	if err := p.writeConfigs(configMetas); err != nil {
+		return err
+	}
+	fmt.Println("< write go configs SUCCEED !")
+
+	if err := p.writeConfigMgr(configMetas); err != nil {
+		return err
+	}
+	fmt.Println("< write go ConfigMgr SUCCEED !")
+
+	if err := p.writeEnums(); err != nil {
+		return err
+	}
+	fmt.Println("< write go enums SUCCEED !")
+
+	p.formatCodes()
+
+	return nil
+}
+
+func (p *GoWriter) writeConfigs(configMetas []*meta.Config) error {
 	configTmpl, err := gotemplate.New("GoConfig").Parse(template.GoConfigTemplate)
 	if err != nil {
 		return err
@@ -28,9 +80,9 @@ func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
 
 	for _, meta := range configMetas {
 		if meta.IsConst {
-			err = writeGoConfig(meta, constsTmpl, filepath)
+			err = p.writeConfig(meta, constsTmpl)
 		} else if consts.SideServer(meta.KeyField.Side) {
-			err = writeGoConfig(meta, configTmpl, filepath)
+			err = p.writeConfig(meta, configTmpl)
 		}
 		if err != nil {
 			return err
@@ -40,22 +92,18 @@ func WriteGoConfigs(filepath string, configMetas []*meta.Config) error {
 	return nil
 }
 
-func writeGoConfig(configMeta *meta.Config, tmpl *gotemplate.Template, filepath string) error {
-	goFilepath := path.Join(filepath, configMeta.Filename+".go")
+func (p *GoWriter) writeConfig(configMeta *meta.Config, tmpl *gotemplate.Template) error {
+	goFilepath := path.Join(p.OutputDir(), configMeta.Filename+".go")
 	file, err := os.Create(goFilepath)
 	if err != nil {
 		return err
 	}
 
-	conf := parseGoConfig(configMeta)
-	_, pkgName := path.Split(filepath)
-
-	conf.Package = pkgName
-
+	conf := p.parseConfig(configMeta)
 	return tmpl.Execute(file, &conf)
 }
 
-func parseGoConfig(configMeta *meta.Config) template.GoConfig {
+func (p *GoWriter) parseConfig(configMeta *meta.Config) template.GoConfig {
 	var (
 		filename     = configMeta.Filename
 		configName   = helper.UnderlineToCamelCase(configMeta.Filename, false)
@@ -68,7 +116,7 @@ func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 
 	if !configMeta.IsConst {
 		keyType = configMeta.KeyField.Type
-		keyFieldName = toGoFieldName(configMeta.KeyField.Name, true)
+		keyFieldName = p.toFieldName(configMeta.KeyField.Name, true)
 	}
 
 	for _, f := range configMeta.Fields {
@@ -77,8 +125,8 @@ func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 		}
 
 		var (
-			fieldName = toGoFieldName(f.Name, true)
-			goType    = toGoType(f.Type, f.TypeParams...)
+			fieldName = p.toFieldName(f.Name, true)
+			goType    = p.toTypeName(f.Type, f.TypeParams...)
 			field     string
 		)
 
@@ -92,6 +140,7 @@ func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 	}
 
 	return template.GoConfig{
+		Package:      p.pkgName,
 		Filename:     filename,
 		ConfigName:   configName,
 		ExportName:   exportName,
@@ -102,7 +151,7 @@ func parseGoConfig(configMeta *meta.Config) template.GoConfig {
 	}
 }
 
-func toGoFieldName(fieldName string, export bool) string {
+func (p *GoWriter) toFieldName(fieldName string, export bool) string {
 	if !export {
 		return fieldName
 	}
@@ -110,7 +159,7 @@ func toGoFieldName(fieldName string, export bool) string {
 	return strings.ToUpper(string(fieldName[0])) + fieldName[1:]
 }
 
-func toGoType(dataType consts.DataType, params ...string) string {
+func (p *GoWriter) toTypeName(dataType consts.DataType, params ...string) string {
 	switch dataType {
 	case consts.Float:
 		return "float32"
@@ -118,15 +167,15 @@ func toGoType(dataType consts.DataType, params ...string) string {
 		return "float64"
 	case consts.Array:
 		elemDataType, elemParams := helper.ParseDataType(params[0])
-		return fmt.Sprintf("[]%s", toGoType(elemDataType, elemParams...))
+		return fmt.Sprintf("[]%s", p.toTypeName(elemDataType, elemParams...))
 	case consts.Array2:
 		elemDataType, elemParams := helper.ParseDataType(params[0])
-		return fmt.Sprintf("[][]%s", toGoType(elemDataType, elemParams...))
+		return fmt.Sprintf("[][]%s", p.toTypeName(elemDataType, elemParams...))
 	case consts.Map:
 		keyDataType, keyParams := helper.ParseDataType(params[0])
-		keyType := toGoType(keyDataType, keyParams...)
+		keyType := p.toTypeName(keyDataType, keyParams...)
 		valDataType, valParams := helper.ParseDataType(params[1])
-		valType := toGoType(valDataType, valParams...)
+		valType := p.toTypeName(valDataType, valParams...)
 		return fmt.Sprintf("map[%s]%s", keyType, valType)
 	case consts.Enum:
 		return "int32"
@@ -135,24 +184,25 @@ func toGoType(dataType consts.DataType, params ...string) string {
 	return string(dataType)
 }
 
-func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
+func (p *GoWriter) writeConfigMgr(metas []*meta.Config) error {
 	tmpl, err := gotemplate.New("GoConfigMgr").Parse(template.GoConfigMgrTemplate)
 	if err != nil {
 		return err
 	}
 
-	_, pkgName := path.Split(filepath)
 	conf := template.GoConfigMgr{
-		Package: pkgName,
+		Package: p.pkgName,
 		Configs: []string{},
 	}
 
-	for _, meta := range metas {
-		exportName := helper.UnderlineToCamelCase(meta.Filename, true)
-		conf.Configs = append(conf.Configs, exportName)
+	for _, m := range metas {
+		if m.IsConst || consts.SideServer(m.KeyField.Side) {
+			exportName := helper.UnderlineToCamelCase(m.Filename, true)
+			conf.Configs = append(conf.Configs, exportName)
+		}
 	}
 
-	goFilepath := path.Join(filepath, "config_mgr.go")
+	goFilepath := path.Join(p.OutputDir(), "config_mgr.go")
 	file, err := os.Create(goFilepath)
 	if err != nil {
 		return err
@@ -162,15 +212,15 @@ func WriteGoConfigMgr(filepath string, metas []*meta.Config) error {
 	return tmpl.Execute(file, &conf)
 }
 
-func WriteGoEnums(filepath string, enums []*types.EnumType) error {
+func (p *GoWriter) writeEnums() error {
 	tmpl, err := gotemplate.New("GoEnums").Parse(template.GoEnumsTemplate)
 	if err != nil {
 		return err
 	}
 
-	_, pkgName := path.Split(filepath)
+	enums := types.Enums()
 	conf := template.GoEnums{
-		Package: pkgName,
+		Package: p.pkgName,
 		Enums:   make([][]template.GoEnum, 0, len(enums)),
 	}
 
@@ -186,12 +236,24 @@ func WriteGoEnums(filepath string, enums []*types.EnumType) error {
 		conf.Enums = append(conf.Enums, goEnum)
 	}
 
-	goFilepath := path.Join(filepath, "enums.go")
+	goFilepath := path.Join(p.OutputDir(), "enums.go")
 	file, err := os.Create(goFilepath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return tmpl.Execute(file, &conf)
+}
+
+func (p *GoWriter) formatCodes() {
+	if err := os.Chdir(p.OutputDir()); err == nil {
+		if err := exec.Command("gofmt", "-w", ".").Run(); err != nil {
+			fmt.Printf("format go codes FAILED: %v\r\n", err)
+		} else {
+			fmt.Println("< format go codes SUCCEED !")
+		}
+	} else {
+		fmt.Printf("format go codes FAILED: %v\r\n", err)
+	}
 }

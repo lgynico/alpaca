@@ -12,30 +12,65 @@ import (
 	"github.com/lgynico/alpaca/meta"
 )
 
-func WriteJSON(filepath string, configMeta *meta.Config) error {
+type JsonWriter struct {
+	output string
+}
+
+func NewJsonWriter(dir string) *JsonWriter {
+	return &JsonWriter{output: path.Join(dir, "json")}
+}
+
+func (p *JsonWriter) mkdir() error {
+	return helper.Mkdir(
+		path.Join(p.OutputDir(), consts.OutputClient),
+		path.Join(p.OutputDir(), consts.OutputServer),
+	)
+}
+
+func (p *JsonWriter) OutputDir() string {
+	return p.output
+}
+
+func (p *JsonWriter) Write(configMetas []*meta.Config) error {
+	if err := p.mkdir(); err != nil {
+		return err
+	}
+
+	fmt.Println("> write json ...")
+	for _, m := range configMetas {
+		if err := p.write(m); err != nil {
+			return err
+		}
+		fmt.Printf("write [%s.json] SUCCEED !\r\n", m.Filename)
+	}
+	fmt.Println("< write json SUCCEED !")
+	return nil
+}
+
+func (p *JsonWriter) write(configMeta *meta.Config) error {
 	var (
 		jsonStr      string
 		jsonFilepath string
 	)
 
 	if configMeta.IsConst || consts.SideServer(configMeta.KeyField.Side) {
-		jsonStr = toJSON(configMeta, consts.SideServer)
-		jsonFilepath = path.Join(filepath, consts.OutputServer, configMeta.Filename+".json")
+		jsonStr = p.stringify(configMeta, consts.SideServer)
+		jsonFilepath = path.Join(p.OutputDir(), consts.OutputServer, configMeta.Filename+".json")
 		if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
 			return err
 		}
 	}
 
 	if configMeta.IsConst || consts.SideClient(configMeta.KeyField.Side) {
-		jsonStr = toJSON(configMeta, consts.SideClient)
-		jsonFilepath = path.Join(filepath, consts.OutputClient, configMeta.Filename+".json")
+		jsonStr = p.stringify(configMeta, consts.SideClient)
+		jsonFilepath = path.Join(p.OutputDir(), consts.OutputClient, configMeta.Filename+".json")
 		return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
 	}
 
 	return nil
 }
 
-func toJSON(configMeta *meta.Config, side consts.Side) string {
+func (p *JsonWriter) stringify(configMeta *meta.Config, side consts.Side) string {
 	jsonArr := make([]string, len(configMeta.Fields[0].Values))
 
 	for i, field := range configMeta.Fields {
