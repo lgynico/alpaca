@@ -5,8 +5,16 @@ alpaca 是一个简单的游戏配置生成工具，能过读取 excel 文件，
 ## 使用方法
 
 ```bash
+# v0.3.0 之前
 alpaca -dir=/path/to/excels -json_out=/path/to/gen/json -go_out=/path/to/gen/go
 ```
+
+```bash
+# v0.3.0 之后
+alpaca -i=/path/to/excels -o=/path/for/output -s=<server side code type> -c=<client side code type>
+```
+
+代码类型：`go/golang` `c#/csharp`
 
 ## 配置方式
 
