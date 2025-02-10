@@ -40,5 +40,9 @@ namespace {{.Namespace}}
             configs.TryGetValue(key, out {{.ConfigName}}Config? config);
             return config;
         }
+
+        public Dictionary<{{.KeyType}}, {{.ConfigName}}Config> GetAll() {
+            return configs;
+        }
     }
 }
