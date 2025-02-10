@@ -21,18 +21,38 @@ type CSharpWriter struct {
 	output    string
 	namespace string
 	side      consts.Side
+
+	tmplConfig    string
+	tmplConfigMgr string
+	tmplConsts    string
+	tmplEnums     string
 }
 
-func NewCSharpWriter(dir string, side consts.Side) *CSharpWriter {
+func NewCSharpWriter(dir string, side consts.Side, tag string) *CSharpWriter {
 	var (
-		output       = path.Join(dir, "csharp", "Config")
-		_, namespace = path.Split(output)
+		output        = path.Join(dir, "csharp", "Config")
+		_, namespace  = path.Split(output)
+		tmplConfig    = template.CSharpConfigTemplate
+		tmplConfigMgr = template.CSharpConfigMgrTemplate
+		tmplConsts    = template.CSharpConstsTemplate
+		tmplEnums     = template.CSharpEnumsTemplate
 	)
+
+	if tag == "legacy" {
+		tmplConfig = template.CSharpLegacyConfigTemplate
+		tmplConfigMgr = template.CSharpLegacyConfigMgrTemplate
+		tmplConsts = template.CSharpLegacyConstsTemplate
+	}
 
 	return &CSharpWriter{
 		output:    output,
 		namespace: helper.CapitalizeLeading(namespace),
 		side:      side,
+
+		tmplConfig:    tmplConfig,
+		tmplConfigMgr: tmplConfigMgr,
+		tmplConsts:    tmplConsts,
+		tmplEnums:     tmplEnums,
 	}
 }
 
@@ -69,11 +89,11 @@ func (p *CSharpWriter) Write(configMetas []*meta.Config) error {
 }
 
 func (p *CSharpWriter) writeConfigs(configMetas []*meta.Config) error {
-	configTmpl, err := gotemplate.New("CSharpConfig").Parse(template.CSharpConfigTemplate)
+	configTmpl, err := gotemplate.New("CSharpConfig").Parse(p.tmplConfig)
 	if err != nil {
 		return err
 	}
-	constsTmpl, err := gotemplate.New("CSharpConsts").Parse(template.CSharpConstsTemplate)
+	constsTmpl, err := gotemplate.New("CSharpConsts").Parse(p.tmplConsts)
 	if err != nil {
 		return err
 	}
@@ -175,7 +195,7 @@ func (p *CSharpWriter) toTypeName(dataType consts.DataType, params ...string) st
 }
 
 func (p *CSharpWriter) writeConfigMgr(metas []*meta.Config) error {
-	tmpl, err := gotemplate.New("CSharpConfigMgr").Parse(template.CSharpConfigMgrTemplate)
+	tmpl, err := gotemplate.New("CSharpConfigMgr").Parse(p.tmplConfigMgr)
 	if err != nil {
 		return err
 	}
@@ -204,7 +224,7 @@ func (p *CSharpWriter) writeConfigMgr(metas []*meta.Config) error {
 }
 
 func (p *CSharpWriter) writeEnums() error {
-	tmpl, err := gotemplate.New("CSharpEnums").Parse(template.CSharpEnumsTemplate)
+	tmpl, err := gotemplate.New("CSharpEnums").Parse(p.tmplEnums)
 	if err != nil {
 		return err
 	}

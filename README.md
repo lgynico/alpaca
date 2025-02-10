@@ -16,6 +16,13 @@ alpaca -i=/path/to/excels -o=/path/for/output -s=<server side code type> -c=<cli
 
 代码类型：`go/golang` `c#/csharp`
 
+> C# 生成使用了较新的语法与特性，一些 Unity 项目使用较老的 .net framework 版本导致生成的代码无法使用。
+> 对于旧版本的 C# 工程，使用 `:legacy` 的 tag 标签来生成旧老代码
+
+```bash
+alpaca -i=/path/to/excels -o=/path/for/output -c=csharp:legacy
+```
+
 ## 配置方式
 
 ### 基础配置
@@ -80,7 +87,7 @@ alpaca -i=/path/to/excels -o=/path/for/output -s=<server side code type> -c=<cli
   - [x] Golang
   - [ ] Java
   - [ ] C/C++
-  - [ ] C#
+  - [x] C#
   - [ ] Js/Ts
 - ~~支持多格式导出~~ (放弃)
   - [x] json

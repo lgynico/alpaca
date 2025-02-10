@@ -1,6 +1,9 @@
 package command
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 const (
 	FlagInput  = "input"
@@ -37,4 +40,15 @@ func codeType(str string) CodeType {
 	}
 
 	return CodeUnknown
+}
+
+func spiltTag(s string) (string, string) {
+	var tag string
+	if strings.Contains(s, ":") {
+		ss := strings.Split(s, ":")
+		tag = ss[1]
+		s = ss[0]
+	}
+
+	return s, tag
 }

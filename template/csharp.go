@@ -16,6 +16,17 @@ var (
 	CSharpConstsTemplate string
 )
 
+var (
+	//go:embed csharp/legacy/config.tmpl
+	CSharpLegacyConfigTemplate string
+
+	//go:embed csharp/legacy/config_mgr.tmpl
+	CSharpLegacyConfigMgrTemplate string
+
+	//go:embed csharp/legacy/consts.tmpl
+	CSharpLegacyConstsTemplate string
+)
+
 type (
 	CSharpConfigField struct {
 		Type string

@@ -1,0 +1,39 @@
+using System.IO;
+using Newtonsoft.Json;
+
+namespace {{.Namespace}}
+{
+
+    public class Consts : IConfig
+    {
+
+        private class Const
+        {
+            {{range .ConfigFields}}public {{.Type}} {{.Name}} { get; set; }
+            {{end -}}
+        }
+
+        private static Const holder;
+
+        {{range .ConfigFields}}{{if .Desc}}/// <summary>
+        /// {{.Desc}}
+        /// </summary>{{end}}
+        public static {{.Type}} {{.Name}} { get { return holder.{{.Name}}; } }
+        {{end}}
+
+        public string Filename()
+        {
+            return "consts";
+        }
+
+        public void Load(string filepath)
+        {
+            var json = File.ReadAllText(Path.Combine(filepath, Filename() + ".json"));
+            var config = JsonConvert.DeserializeObject<Const>(json, ConfigMgr.options);
+            if (config != null)
+            {
+                holder = config;
+            }
+        }
+    }
+}

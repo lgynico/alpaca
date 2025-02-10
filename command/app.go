@@ -61,8 +61,12 @@ func (p *app) checkFlags(ctx *cli.Context) error {
 	p.output = ctx.String(FlagOutput)
 
 	p.dataWriter = writer.NewJsonWriter(p.output)
-	p.clientCodeWriter = p.getWriter(codeType(ctx.String(FlagClient)), consts.SideClient)
-	p.serverCodeWriter = p.getWriter(codeType(ctx.String(FlagServer)), consts.SideServer)
+
+	c, cTag := spiltTag(ctx.String(FlagClient))
+	p.clientCodeWriter = p.getWriter(codeType(c), consts.SideClient, cTag)
+
+	s, sTag := spiltTag(ctx.String(FlagServer))
+	p.serverCodeWriter = p.getWriter(codeType(s), consts.SideServer, sTag)
 
 	return nil
 }
@@ -94,12 +98,17 @@ func (p *app) flags() []cli.Flag {
 	}
 }
 
-func (p *app) getWriter(codeType CodeType, side consts.Side) writer.FileWriter {
+func (p *app) getWriter(codeType CodeType, side consts.Side, tag ...string) writer.FileWriter {
+	var _tag string
+	if len(tag) > 0 {
+		_tag = tag[0]
+	}
+
 	switch codeType {
 	case CodeGolang:
 		return writer.NewGoWriter(p.output, side)
 	case CodeCSharp:
-		return writer.NewCSharpWriter(p.output, side)
+		return writer.NewCSharpWriter(p.output, side, _tag)
 	}
 
 	return &writer.NoneWriter{}
