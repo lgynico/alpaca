@@ -79,7 +79,7 @@ func parse(filepath string, isConst bool) ([]*Config, error) {
 			return nil, errors.New("row count lack")
 		}
 
-		datas = fixedRows(datas)
+		datas = fixedRows(datas, filepath, sheet.Name)
 
 		var (
 			nameRow  []string
@@ -163,7 +163,7 @@ func parse(filepath string, isConst bool) ([]*Config, error) {
 			}
 		} else {
 			for ; i < len(datas); i++ {
-				for j := 1; j < len(datas[i]); j++ {
+				for j := 1; j < len(nameRow); j++ {
 					meta.Fields[j-1].RawValues = append(meta.Fields[j-1].RawValues, datas[i][j])
 				}
 			}
@@ -188,14 +188,14 @@ func prefix(filepath string) string {
 	return strings.TrimSuffix(filename, path.Ext(filename))
 }
 
-func fixedRows(rows [][]string) [][]string {
+func fixedRows(rows [][]string, filename, sheetName string) [][]string {
 	rowLen := len(rows[0])
 	for i := 1; i < len(rows); i++ {
-		if len(rows[i]) == rowLen {
-			continue
+		if len(rows[i]) < rowLen {
+			rows[i] = append(rows[i], make([]string, rowLen-len(rows[i]))...)
+		} else if len(rows[i]) > rowLen {
+			fmt.Printf("\033[33m[WARN] %s:%s row %d contains extra space\033[0m\r\n", filename, sheetName, i+1)
 		}
-
-		rows[i] = append(rows[i], make([]string, rowLen-len(rows[i]))...)
 	}
 
 	return rows
