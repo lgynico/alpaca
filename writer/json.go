@@ -14,17 +14,28 @@ import (
 
 type JsonWriter struct {
 	output string
+	c, s   bool
 }
 
-func NewJsonWriter(dir string) *JsonWriter {
-	return &JsonWriter{output: path.Join(dir, "json")}
+func NewJsonWriter(dir string, c, s bool) *JsonWriter {
+	return &JsonWriter{output: path.Join(dir, "json"), c: c, s: s}
 }
 
 func (p *JsonWriter) mkdir() error {
-	return helper.Mkdir(
-		path.Join(p.OutputDir(), consts.OutputClient),
-		path.Join(p.OutputDir(), consts.OutputServer),
-	)
+	dir := []string{}
+	if p.c {
+		dir = append(dir, path.Join(p.OutputDir(), consts.OutputClient))
+	}
+
+	if p.s {
+		dir = append(dir, path.Join(p.OutputDir(), consts.OutputServer))
+	}
+
+	if len(dir) == 0 {
+		return nil
+	}
+
+	return helper.Mkdir(dir...)
 }
 
 func (p *JsonWriter) OutputDir() string {
@@ -53,18 +64,24 @@ func (p *JsonWriter) write(configMeta *meta.Config) error {
 		jsonFilepath string
 	)
 
-	if configMeta.IsConst || consts.SideServer(configMeta.KeyField.Side) {
-		jsonStr = p.stringify(configMeta, consts.SideServer)
-		jsonFilepath = path.Join(p.OutputDir(), consts.OutputServer, configMeta.Filename+".json")
-		if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
-			return err
+	if p.s {
+		if configMeta.IsConst || consts.SideServer(configMeta.KeyField.Side) {
+			jsonStr = p.stringify(configMeta, consts.SideServer)
+			jsonFilepath = path.Join(p.OutputDir(), consts.OutputServer, configMeta.Filename+".json")
+			if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
+				return err
+			}
 		}
 	}
 
-	if configMeta.IsConst || consts.SideClient(configMeta.KeyField.Side) {
-		jsonStr = p.stringify(configMeta, consts.SideClient)
-		jsonFilepath = path.Join(p.OutputDir(), consts.OutputClient, configMeta.Filename+".json")
-		return os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm)
+	if p.c {
+		if configMeta.IsConst || consts.SideClient(configMeta.KeyField.Side) {
+			jsonStr = p.stringify(configMeta, consts.SideClient)
+			jsonFilepath = path.Join(p.OutputDir(), consts.OutputClient, configMeta.Filename+".json")
+			if err := os.WriteFile(jsonFilepath, []byte(jsonStr), os.ModePerm); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

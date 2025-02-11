@@ -60,13 +60,13 @@ func (p *app) checkFlags(ctx *cli.Context) error {
 	p.input = ctx.String(FlagInput)
 	p.output = ctx.String(FlagOutput)
 
-	p.dataWriter = writer.NewJsonWriter(p.output)
-
 	c, cTag := spiltTag(ctx.String(FlagClient))
 	p.clientCodeWriter = p.getWriter(codeType(c), consts.SideClient, cTag)
 
 	s, sTag := spiltTag(ctx.String(FlagServer))
 	p.serverCodeWriter = p.getWriter(codeType(s), consts.SideServer, sTag)
+
+	p.dataWriter = writer.NewJsonWriter(p.output, len(c) > 0, len(s) > 0)
 
 	return nil
 }
