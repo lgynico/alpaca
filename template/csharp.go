@@ -3,28 +3,17 @@ package template
 import _ "embed"
 
 var (
-	//go:embed csharp/config.tmpl
+	//go:embed templates/csharp/config.tmpl
 	CSharpConfigTemplate string
 
-	//go:embed csharp/config_mgr.tmpl
+	//go:embed templates/csharp/config_mgr.tmpl
 	CSharpConfigMgrTemplate string
 
-	//go:embed csharp/enums.tmpl
+	//go:embed templates/csharp/enums.tmpl
 	CSharpEnumsTemplate string
 
-	//go:embed csharp/consts.tmpl
+	//go:embed templates/csharp/consts.tmpl
 	CSharpConstsTemplate string
-)
-
-var (
-	//go:embed csharp/legacy/config.tmpl
-	CSharpLegacyConfigTemplate string
-
-	//go:embed csharp/legacy/config_mgr.tmpl
-	CSharpLegacyConfigMgrTemplate string
-
-	//go:embed csharp/legacy/consts.tmpl
-	CSharpLegacyConstsTemplate string
 )
 
 type (

@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	FlagInput  = "input"
-	FlagOutput = "output"
-	FlagServer = "server"
-	FlagClient = "client"
+	FlagInput    = "input"
+	FlagOutput   = "output"
+	FlagServer   = "server"
+	FlagClient   = "client"
+	FlagTemplate = "template"
 )
 
 var (

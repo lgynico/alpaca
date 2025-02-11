@@ -18,6 +18,7 @@ func Run(args []string) error {
 type app struct {
 	cli.App
 	input, output    string
+	templatePath     string
 	dataWriter       writer.FileWriter
 	clientCodeWriter writer.FileWriter
 	serverCodeWriter writer.FileWriter
@@ -42,15 +43,15 @@ func (p *app) action(ctx *cli.Context) error {
 	}
 
 	if err := p.dataWriter.Write(metas); err != nil {
-		fmt.Printf("Write data error: %v\n", err)
+		fmt.Printf("\033[31m[ERROR] Write data error: %v\033[0m\r\n", err)
 	}
 
 	if err := p.serverCodeWriter.Write(metas); err != nil {
-		fmt.Printf("Write server code error: %v\n", err)
+		fmt.Printf("\033[31m[ERROR] Write server code error: %v\033[0m\r\n", err)
 	}
 
 	if err := p.clientCodeWriter.Write(metas); err != nil {
-		fmt.Printf("Write client code error: %v\n", err)
+		fmt.Printf("\033[31m[ERROR] Write client code error: %v\033[0m\r\n", err)
 	}
 
 	return nil
@@ -59,6 +60,7 @@ func (p *app) action(ctx *cli.Context) error {
 func (p *app) checkFlags(ctx *cli.Context) error {
 	p.input = ctx.String(FlagInput)
 	p.output = ctx.String(FlagOutput)
+	p.templatePath = ctx.String(FlagTemplate)
 
 	c, cTag := spiltTag(ctx.String(FlagClient))
 	p.clientCodeWriter = p.getWriter(codeType(c), consts.SideClient, cTag)
@@ -95,20 +97,20 @@ func (p *app) flags() []cli.Flag {
 			Aliases: []string{"c"},
 			Usage:   "client side language code to generate [go/c#]",
 		},
+		&cli.StringFlag{
+			Name:    FlagTemplate,
+			Aliases: []string{"t"},
+			Usage:   "template path to generate code, if not specified, use buildin templates",
+		},
 	}
 }
 
-func (p *app) getWriter(codeType CodeType, side consts.Side, tag ...string) writer.FileWriter {
-	var _tag string
-	if len(tag) > 0 {
-		_tag = tag[0]
-	}
-
+func (p *app) getWriter(codeType CodeType, side consts.Side, tag string) writer.FileWriter {
 	switch codeType {
 	case CodeGolang:
-		return writer.NewGoWriter(p.output, side)
+		return writer.NewGoWriter(p.output, side, p.templatePath)
 	case CodeCSharp:
-		return writer.NewCSharpWriter(p.output, side, _tag)
+		return writer.NewCSharpWriter(p.output, side, p.templatePath, tag)
 	}
 
 	return &writer.NoneWriter{}

@@ -1,0 +1,4 @@
+[submodule "template/templates"]
+	path = template/templates
+	url = https://github.com/lgynico/alpaca_templates.git
+	branch = master

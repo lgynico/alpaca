@@ -3,16 +3,16 @@ package template
 import _ "embed"
 
 var (
-	//go:embed golang/config.tmpl
+	//go:embed templates/golang/config.tmpl
 	GoConfigTemplate string
 
-	//go:embed golang/config_mgr.tmpl
+	//go:embed templates/golang/config_mgr.tmpl
 	GoConfigMgrTemplate string
 
-	//go:embed golang/enums.tmpl
+	//go:embed templates/golang/enums.tmpl
 	GoEnumsTemplate string
 
-	//go:embed golang/consts.tmpl
+	//go:embed templates/golang/consts.tmpl
 	GoConstsTemplate string
 )
 

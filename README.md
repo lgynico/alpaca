@@ -16,12 +16,16 @@ alpaca -i=/path/to/excels -o=/path/for/output -s=<server side code type> -c=<cli
 
 代码类型：`go/golang` `c#/csharp`
 
-> C# 生成使用了较新的语法与特性，一些 Unity 项目使用较老的 .net framework 版本导致生成的代码无法使用。
-> 对于旧版本的 C# 工程，使用 `:legacy` 的 tag 标签来生成旧老代码
+### 自定义模板
+
+通过自定义模板的方式，灵活调整代码文件结构
 
 ```bash
-alpaca -i=/path/to/excels -o=/path/for/output -c=csharp:legacy
+# 指定参数 -t 为自定义模板路径，否则使用内置模板
+alpaca -t=/path/to/template ...
 ```
+
+模板文件参考：https://github.com/lgynico/alpaca_templates
 
 ## 配置方式
 

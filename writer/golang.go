@@ -21,18 +21,34 @@ type GoWriter struct {
 	output  string
 	pkgName string
 	side    consts.Side
+	tmpl    Tempaltes
 }
 
-func NewGoWriter(dir string, side consts.Side) *GoWriter {
+func NewGoWriter(dir string, side consts.Side, tmplPath string) *GoWriter {
 	var (
-		output     = path.Join(dir, "go", "conf")
+		output     = path.Join(dir, "golang", "conf")
 		_, pkgName = path.Split(output)
+		tmpl       Tempaltes
+		err        error
 	)
 
+	if len(tmplPath) > 0 {
+		if tmpl, err = readTemplates("golang", tmplPath); err != nil {
+			fmt.Printf("\033[31m[ERROR] read go templates FAILED: %v\033[0m\r\n", err)
+			os.Exit(1)
+		}
+	} else {
+		tmpl.Config = template.GoConfigTemplate
+		tmpl.ConfigMgr = template.GoConfigMgrTemplate
+		tmpl.Consts = template.GoConstsTemplate
+		tmpl.Enums = template.GoEnumsTemplate
+	}
+
 	return &GoWriter{
-		output:  path.Join(dir, "go", "conf"),
+		output:  output,
 		pkgName: pkgName,
 		side:    side,
+		tmpl:    tmpl,
 	}
 }
 
@@ -71,11 +87,11 @@ func (p *GoWriter) Write(configMetas []*meta.Config) error {
 }
 
 func (p *GoWriter) writeConfigs(configMetas []*meta.Config) error {
-	configTmpl, err := gotemplate.New("GoConfig").Parse(template.GoConfigTemplate)
+	configTmpl, err := gotemplate.New("GoConfig").Parse(p.tmpl.Config)
 	if err != nil {
 		return err
 	}
-	constsTmpl, err := gotemplate.New("GoConsts").Parse(template.GoConstsTemplate)
+	constsTmpl, err := gotemplate.New("GoConsts").Parse(p.tmpl.Consts)
 	if err != nil {
 		return err
 	}
@@ -187,7 +203,7 @@ func (p *GoWriter) toTypeName(dataType consts.DataType, params ...string) string
 }
 
 func (p *GoWriter) writeConfigMgr(metas []*meta.Config) error {
-	tmpl, err := gotemplate.New("GoConfigMgr").Parse(template.GoConfigMgrTemplate)
+	tmpl, err := gotemplate.New("GoConfigMgr").Parse(p.tmpl.ConfigMgr)
 	if err != nil {
 		return err
 	}
@@ -215,7 +231,7 @@ func (p *GoWriter) writeConfigMgr(metas []*meta.Config) error {
 }
 
 func (p *GoWriter) writeEnums() error {
-	tmpl, err := gotemplate.New("GoEnums").Parse(template.GoEnumsTemplate)
+	tmpl, err := gotemplate.New("GoEnums").Parse(p.tmpl.Enums)
 	if err != nil {
 		return err
 	}

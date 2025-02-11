@@ -9,6 +9,6 @@ import (
 
 func main() {
 	if err := command.Run(os.Args); err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("\033[31m[ERROR] %s\033[0m\r\n", err)
 	}
 }
