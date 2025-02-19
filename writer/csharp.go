@@ -159,7 +159,7 @@ func (p *CSharpWriter) toTypeName(dataType consts.DataType, params ...string) st
 		return "sbyte"
 	case consts.Int16:
 		return "short"
-	case consts.Int64:
+	case consts.Int64, consts.Datetime:
 		return "long"
 	case consts.Uint, consts.Uint32:
 		return "uint"

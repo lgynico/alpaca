@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lgynico/alpaca/consts"
 	"github.com/lgynico/alpaca/types"
@@ -29,6 +30,10 @@ func ParseDataType(typeStr string) (consts.DataType, []string) {
 	dataType := consts.DataType(typeStr)
 	if isPrimaryType(dataType) {
 		return dataType, nil
+	}
+
+	if typeStr == string(consts.Datetime) {
+		return consts.Datetime, nil
 	}
 
 	// array2:xxx
@@ -172,13 +177,24 @@ func ParseValue(rawValue string, dataType consts.DataType, params ...string) (an
 		}
 
 		return nil, fmt.Errorf("unknow enum value: %s_%s", enumName, rawValue)
+
+	case consts.Datetime:
+		datetime, err := time.Parse(time.DateTime, rawValue)
+		if err != nil {
+			datetime, err = time.Parse(time.DateOnly, rawValue)
+			if err != nil {
+				return nil, fmt.Errorf("unsupport datetime format: %s [%v]", rawValue, err)
+			}
+		}
+
+		return datetime.Unix(), nil
 	}
 
 	return nil, errors.New("unknown type")
 }
 
 func readValue(rawValue string, dataType consts.DataType, valSep string, params ...string) (any, string, error) {
-	if isPrimaryType(dataType) {
+	if isPrimaryType(dataType) || dataType == consts.Datetime {
 		beParse, remain, _ := strings.Cut(rawValue, valSep)
 		value, err := ParseValue(beParse, dataType)
 		return value, remain, err
@@ -330,6 +346,8 @@ func DefaultStringValue(dataType consts.DataType) string {
 		return "{}"
 	case consts.Enum:
 		return "0"
+	case consts.Datetime:
+		return "1970-01-01 00:00:00"
 	}
 
 	return ""

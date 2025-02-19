@@ -197,6 +197,8 @@ func (p *GoWriter) toTypeName(dataType consts.DataType, params ...string) string
 		return fmt.Sprintf("map[%s]%s", keyType, valType)
 	case consts.Enum:
 		return "int32"
+	case consts.Datetime:
+		return "int64"
 	}
 
 	return string(dataType)

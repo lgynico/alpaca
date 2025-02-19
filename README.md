@@ -54,6 +54,7 @@ alpaca -t=/path/to/template ...
 |数组|`array:type` `array2:type`|&nbsp;
 |字典|`map:ktype,vtype`|&nbsp;
 |枚举|`enum:etype`|`etype` 为枚举表配置
+|时间|`datetime`|格式为 `YYYY-MM-DD HH:mm:ss`，会转换成 long 类型
 
 #### 验证规则 rule
 
