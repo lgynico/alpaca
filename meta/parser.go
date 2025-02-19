@@ -144,6 +144,11 @@ func parse(filepath string, isConst bool) ([]*Config, error) {
 		}
 
 		for j := 1; j < len(nameRow); j++ {
+			// skip empty row
+			if len(nameRow[j]) == 0 {
+				continue
+			}
+
 			dataType, typeParams := helper.ParseDataType(typeRow[j])
 			field := &Field{
 				Name:       nameRow[j],
@@ -163,8 +168,13 @@ func parse(filepath string, isConst bool) ([]*Config, error) {
 			}
 		} else {
 			for ; i < len(datas); i++ {
+				k := 0
 				for j := 1; j < len(nameRow); j++ {
-					meta.Fields[j-1].RawValues = append(meta.Fields[j-1].RawValues, datas[i][j])
+					if len(nameRow[j]) == 0 {
+						continue
+					}
+					meta.Fields[k].RawValues = append(meta.Fields[k].RawValues, datas[i][j])
+					k++
 				}
 			}
 		}
@@ -200,3 +210,11 @@ func fixedRows(rows [][]string, filename, sheetName string) [][]string {
 
 	return rows
 }
+
+// func removeRowValue(rows []string, idx int) []string {
+// 	if len(rows) <= idx {
+// 		return rows
+// 	}
+
+// 	return append(rows[:idx], rows[idx+1:]...)
+// }
