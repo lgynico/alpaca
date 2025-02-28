@@ -41,6 +41,7 @@ alpaca -t=/path/to/template ...
 |`__side__`|生成端|c=客户端, s=服务端
 |`__desc__`|列的描述|&nbsp;
 |`__rule__`|可对列进行一些规则限制|&nbsp;
+|`#xxxx`|注释行|`#` 号开头的行不会被解析
 
 #### 支持的 type
 

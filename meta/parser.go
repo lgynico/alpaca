@@ -168,8 +168,13 @@ func parse(filepath string, isConst bool) ([]*Config, error) {
 			}
 		} else {
 			for ; i < len(datas); i++ {
+				// skip comment row
+				if strings.HasPrefix(datas[i][0], "#") {
+					continue
+				}
 				k := 0
 				for j := 1; j < len(nameRow); j++ {
+					// skip empty col
 					if len(nameRow[j]) == 0 {
 						continue
 					}
